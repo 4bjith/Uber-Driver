@@ -1,8 +1,40 @@
+import { useMutation } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { toast } from "react-toastify";
+import api from "../api/axiosClint";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const SignInMutation = useMutation({
+    mutationFn: async (FormData) => {
+      return await api.post("/driverlogin", FormData);
+    },
+    onSuccess: (response) => {
+      console.log("Login successful:", response.data);
+      toast.success("Login successfully");
+    },
+    onError: (error) => {
+      console.error("Error while Sign in");
+      toast.error("Sign in failed");
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast.warn("Please fill in all fields.");
+      return;
+    }
+    const formData = {
+      email,
+      password,
+    };
+    SignInMutation.mutate({ email, password });
+  };
 
   return (
     <div className="w-full h-screen bg-gray-300 flex p-5">
@@ -56,6 +88,9 @@ export default function Login() {
                 id="email"
                 type="email"
                 placeholder=" "
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                }}
                 className="
                   peer block w-full px-4 pt-4 pb-2 
                   border-2 border-gray-300 rounded-md 
@@ -85,6 +120,7 @@ export default function Login() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder=" "
+                onChange={(e) => setPassword(e.target.value)}
                 className="
                   peer block w-full px-4 pt-4 pb-2 
                   border-2 border-gray-300 rounded-md 
@@ -122,7 +158,10 @@ export default function Login() {
 
             {/* Submit Button */}
             <div className="w-full h-auto mt-8 flex justify-center items-center">
-              <button className="px-[40px]  py-2 rounded-xl cursor-pointer bg-transparent border-2 hover:scale-110 text-white font-semibold transition">
+              <button
+                onClick={handleSubmit}
+                className="px-[40px]  py-2 rounded-xl cursor-pointer bg-transparent border-2 hover:scale-110 text-white font-semibold transition"
+              >
                 Sign in
               </button>
             </div>
