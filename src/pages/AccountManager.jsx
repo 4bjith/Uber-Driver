@@ -4,6 +4,7 @@ import useDriverStore from "../Zustand/DriverAuth";
 import { useQuery } from "@tanstack/react-query";
 import api from "../api/axiosClint";
 import { useNavigate } from "react-router-dom";
+import { MdChangeCircle } from "react-icons/md";
 function AccountManager() {
   const token = useDriverStore((state) => state.token);
   const setDriver = useDriverStore((state) => state.setDriver);
@@ -42,15 +43,33 @@ function AccountManager() {
       </div>
 
       {/* Profile section */}
-      <div className="w-full h-auto p-5 bg-white shadow-lg rounded-xl mt-5 flex">
+      <div className="w-full h-auto p-5 bg-white shadow-lg rounded-xl mt-5 flex ">
         {/* Profile image */}
-        <div className="w-2/5 md:w-1/5 flex justify-center items-center">
-          <div className="w-[150px] h-[150px] rounded-full p-[5px] bg-green-700 overflow-hidden">
-            <img
-              src="https://i.pinimg.com/474x/bf/f0/1d/bff01dd0ae186d938f1af8ba127f12bd.jpg"
-              alt="Profile"
-              className="w-full h-full object-cover rounded-full"
-            />
+        {/* Profile image */}
+        <div className="w-2/5 md:w-1/5 flex justify-center items-center relative ">
+          <div className="w-[150px] h-[150px] rounded-full p-[5px] bg-green-700 overflow-hidden relative">
+            {!data?.driver.profileImg ? (
+          <img
+            src="https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png"
+            alt="Profile"
+            className="rounded-full w-20 h-20 object-cover"
+          />
+        ) : (
+          <img
+            src={
+              data?.driver.profileImg?.startsWith("http")
+                ? data?.driver.profileImg
+                : `${
+                     "http://localhost:8080"
+                  }${data?.driver.profileImg}`
+            }
+            alt="Profile"
+            className="align-middle overflow-hidden rounded-full w-full h-full"
+          />
+        )}
+          </div>
+          <div onClick={()=>{Navigate("/update/prfileImage")}} className="absolute bottom-2  right-5 bg-white rounded-full p-1 shadow-md cursor-pointer hover:scale-110 transition-transform">
+            <MdChangeCircle className="text-green-700 text-3xl" />
           </div>
         </div>
 
@@ -107,7 +126,12 @@ function AccountManager() {
           <h1 className="text-green-800 font-bold text-[1.1rem]">
             Vehicle Information
           </h1>
-          <button onClick={()=>{Navigate("/update/vehicleinfo")}} className="w-[60px] h-auto flex justify-center gap-2 items-center bg-amber-600 text-white rounded-md text-[0.8rem]">
+          <button
+            onClick={() => {
+              Navigate("/update/vehicleinfo");
+            }}
+            className="w-[60px] h-auto flex justify-center gap-2 items-center bg-amber-600 text-white rounded-md text-[0.8rem]"
+          >
             Edit <CiEdit />
           </button>
         </div>
