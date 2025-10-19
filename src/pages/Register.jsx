@@ -10,6 +10,7 @@ function Register() {
   const [mobile, setMobile] = useState("");
   const [vehicle, setVehicle] = useState("");
   const [licence, setLicence] = useState("");
+  const [vehicleName, setVehicleName] = useState("");
 
   // Mutation function for registration
   const SignUpMutation = useMutation({
@@ -29,7 +30,15 @@ function Register() {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name || !email || !password || !mobile || !vehicle || !licence) {
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !mobile ||
+      !vehicleName ||
+      !vehicle ||
+      !licence
+    ) {
       toast.warn("Please fill in all fields.");
       return;
     }
@@ -39,6 +48,7 @@ function Register() {
       email,
       password,
       mobile,
+      vehicleName,
       vehicle,
       licence,
     };
@@ -105,6 +115,16 @@ function Register() {
                     placeholder="Mobile No."
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg bg-transparent border border-white border-opacity-30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  />
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Vehicle Name"
+                    value={vehicleName}
+                    onChange={(e) => setVehicleName(e.target.value)}
                     className="w-full px-4 py-2 rounded-lg bg-transparent border border-white border-opacity-30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-purple-300"
                   />
                 </div>

@@ -3,11 +3,16 @@ import React, { useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { toast } from "react-toastify";
 import api from "../api/axiosClint";
+import { useNavigate } from "react-router-dom";
+import usedriverStore from "../Zustand/DriverAuth"
 
 export default function Login() {
+  const Navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const {setToken} = usedriverStore()
 
   const SignInMutation = useMutation({
     mutationFn: async (FormData) => {
@@ -15,7 +20,9 @@ export default function Login() {
     },
     onSuccess: (response) => {
       console.log("Login successful:", response.data);
+      setToken(response.data.token)
       toast.success("Login successfully");
+      Navigate("/dashboard");
     },
     onError: (error) => {
       console.error("Error while Sign in");

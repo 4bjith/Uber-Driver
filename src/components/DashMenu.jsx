@@ -6,8 +6,11 @@ import { BsCalendar2Event } from "react-icons/bs";
 import { MdInsertChartOutlined } from "react-icons/md";
 import { FaUserCog } from "react-icons/fa";
 import { CgLogOut } from "react-icons/cg";
-
+import useDriverStore from "../Zustand/DriverAuth";
+import { useNavigate } from "react-router-dom";
 function DashMenu() {
+  const { logout } = useDriverStore();
+  const Navigate = useNavigate()
   return (
     <div className="w-[100%] h-[100%] py-[20px] px-[20px] md:px-[30px] rounded-lg shadow-xl flex items-center md:items-start flex-col gap-[30px] relative bg-white">
       <div className="">
@@ -37,11 +40,20 @@ function DashMenu() {
           Analytics
         </h2>
       </div>
-      <div className="w-auto flex gap-[20px] items-center cursor-pointer absolute bottom-[55px]">
+      <div 
+        onClick={()=>{
+          Navigate("/account")
+        }}
+      className="w-auto flex gap-[20px] items-center cursor-pointer absolute bottom-[55px]">
         <FaUserCog />
         <h2 className="text-[1rem] font-semibold hidden md:block">Profile</h2>
       </div>
-      <div className="w-auto flex gap-[20px] items-center cursor-pointer absolute bottom-5">
+      <div
+        onClick={() => {logout()
+          Navigate("/login")
+        }}
+        className="w-auto flex gap-[20px] items-center cursor-pointer absolute bottom-5"
+      >
         <CgLogOut />
         <h2 className="text-[1rem] font-semibold hidden md:block">Log Out</h2>
       </div>
