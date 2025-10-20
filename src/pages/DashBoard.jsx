@@ -6,6 +6,7 @@ import DrivingHoursCard from "../components/DriveHours";
 import CurrentTripCard from "../components/CurrentTrip";
 import { BsArrowUpRightCircle } from "react-icons/bs";
 import Trips from "../components/Trips";
+import CurrentLocationMap from "../components/CurrentLocationMap";
 
 function DashBoard() {
   const data = [
@@ -36,7 +37,9 @@ function DashBoard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <CurrentTripCard />
           <div className="h-[400px] bg-white p-4 rounded-2xl relative">
-            <div className="w-full h-full bg-blue-300 rounded-2xl"></div>
+            <div className="w-full h-full bg-blue-300 rounded-2xl">
+              <CurrentLocationMap/>
+            </div>
             <h2 className="absolute top-2 left-2 bg-white px-2 py-1 rounded-br-2xl text-sm font-semibold">
               Map
             </h2>
