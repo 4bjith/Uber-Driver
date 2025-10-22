@@ -4,7 +4,7 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { toast } from "react-toastify";
 import api from "../api/axiosClint";
 import { useNavigate } from "react-router-dom";
-import usedriverStore from "../Zustand/DriverAuth"
+import usedriverStore from "../Zustand/DriverAuth";
 
 export default function Login() {
   const Navigate = useNavigate();
@@ -12,7 +12,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const {setToken} = usedriverStore()
+  const { setToken } = usedriverStore();
 
   const SignInMutation = useMutation({
     mutationFn: async (FormData) => {
@@ -20,7 +20,7 @@ export default function Login() {
     },
     onSuccess: (response) => {
       console.log("Login successful:", response.data);
-      setToken(response.data.token)
+      setToken(response.data.token);
       toast.success("Login successfully");
       Navigate("/dashboard");
     },
@@ -36,11 +36,29 @@ export default function Login() {
       toast.warn("Please fill in all fields.");
       return;
     }
-    const formData = {
-      email,
-      password,
-    };
-    SignInMutation.mutate({ email, password });
+    // Step 1️⃣: Set current location
+    if (!navigator.geolocation) {
+      toast.warn("Geolocation is not supported by your browser,");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          type: "Point",
+          coordinates: [position.coords.longitude, position.coords.latitude],
+        };
+        const formData = {
+          email,
+          password,
+          location,
+        };
+        SignInMutation.mutate(formData);
+      },
+      (error) => {
+        toast.error("Failed to get location.");
+        console.error("Geolocation error:", error);
+      }
+    );
   };
 
   return (
@@ -167,9 +185,14 @@ export default function Login() {
             <div className="w-full h-auto mt-8 flex justify-center items-center">
               <button
                 onClick={handleSubmit}
-                className="px-[40px]  py-2 rounded-xl cursor-pointer bg-transparent border-2 hover:scale-110 text-white font-semibold transition"
+                disabled={SignInMutation.isLoading}
+                className={`px-[40px] py-2 rounded-xl cursor-pointer border-2 text-white font-semibold transition ${
+                  SignInMutation.isLoading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-transparent hover:scale-110"
+                }`}
               >
-                Sign in
+                {SignInMutation.isLoading ? "Signing in..." : "Sign in"}
               </button>
             </div>
             <p className="text-[0.7rem] mt-[10px] text-gray-50">
