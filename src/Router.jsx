@@ -14,7 +14,7 @@ function router() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/dashboard" element={<DashBoard />} />
-          <Route path="/login" element={<Login />} />
+          {/* <Route path="/login" element={<Login />} /> */}
           <Route path="/register" element={<Register />} />
           <Route path="/account" element={<AccountManager />} />
           <Route path="/update/personalinfo" element={<EditPersonalInfo />} />
