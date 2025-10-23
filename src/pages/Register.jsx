@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import api from "../api/axiosClint";
@@ -151,9 +151,16 @@ function Register() {
 
                 <button
                   type="submit"
-                  className="w-full bg-transparent bg-opacity-20 hover:bg-opacity-40 text-white font-semibold py-2 rounded-lg transition duration-200 border border-white border-opacity-30"
+                  disabled={SignUpMutation.isPending}
+                  className={`w-full text-white font-semibold py-2 rounded-lg transition duration-200 border border-white border-opacity-30 ${
+                    SignUpMutation.isPending
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-opacity-40"
+                  }`}
                 >
-                  Create Account
+                  {SignUpMutation.isPending
+                    ? "Creating Account..."
+                    : "Create Account"}
                 </button>
               </form>
 

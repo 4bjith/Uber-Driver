@@ -1,40 +1,47 @@
 // components/CurrentLocationMap.js
 import React, { useState, useEffect } from "react";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { useQuery } from "@tanstack/react-query";
+import useDriverStore from "../Zustand/DriverAuth";
+import api from "../api/axiosClint";
 
 const CurrentLocationMap = () => {
   const [location, setLocation] = useState(null);
   const [error, setError] = useState(null);
+  const token = useDriverStore((state) => state.token);
 
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: "AIzaSyBhxEt5g6ZwXLjydOl5GXJMv_x5dcRmnCo", // 🔒 Replace with your actual key
+  const { data } = useQuery({
+    queryKey: ["location"],
+    queryFn: async () => {
+      const response = await api.get("/driver", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    },
+    retry: false,
+    enabled: !!token,
   });
 
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: "AIzaSyBhxEt5g6ZwXLjydOl5GXJMv_x5dcRmnCo", // 🔒 Replace with your key
+  });
+
+  // Set map location once backend data is available
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-        },
-        (err) => {
-          setError("Unable to retrieve location");
-          console.error(err);
-        }
-      );
-    } else {
-      setError("Geolocation not supported");
+    if (data?.driver?.location?.coordinates) {
+      setLocation({
+        lat: data.driver.location.coordinates[1],
+        lng: data.driver.location.coordinates[0],
+      });
     }
-  }, []);
+  }, [data]);
 
   if (loadError) return <div>Error loading maps</div>;
   if (!isLoaded) return <div>Loading map...</div>;
 
   return (
     <div
-      className="w-full h-full min-h-[300px]" // ✅ responsive height
+      className="w-full h-full min-h-[300px]"
       style={{
         position: "relative",
         borderRadius: "12px",
@@ -46,7 +53,7 @@ const CurrentLocationMap = () => {
         <GoogleMap
           mapContainerStyle={{
             width: "100%",
-            height: "100%", // ✅ fills parent div
+            height: "100%",
           }}
           center={location}
           zoom={15}
