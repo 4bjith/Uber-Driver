@@ -23,7 +23,7 @@ const CurrentLocationMap = () => {
   });
 
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: "AIzaSyBhxEt5g6ZwXLjydOl5GXJMv_x5dcRmnCo", // 🔒 Replace with your key
+    googleMapsApiKey: "AIzaSyBnPKTRjRNAcLlyREwkVi2mwLAJtKl7j7M", // 🔒 Replace with your key
   });
 
   // Set map location once backend data is available
