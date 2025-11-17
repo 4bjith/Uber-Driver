@@ -6,20 +6,54 @@ import AccountManager from "./pages/AccountManager";
 import EditPersonalInfo from "./components/EditPersonalInfo";
 import EditVehicleInfo from "./components/EditVehicleInfo";
 import ProfileImgUpdateForm from "./pages/ProfileImageUpdateForm";
+import io from "socket.io-client";
+import { useRef, useState } from "react";
+import { useEffect } from "react";
+import { toast } from "react-toastify";
+import CurrentRide from "./pages/CurrentRide";
 
 function router() {
+  const [isMsg, setIsMsg] = useState("");
+  const socketRef = useRef(null);
+  // 🔌 Connect to socket server
+  useEffect(() => {
+    socketRef.current = io("http://localhost:8080", {
+      transports: ["websocket"],
+    });
+
+    socketRef.current.on("connect", () => {
+      console.log("🚗 Client connected:", socketRef.current.id);
+    });
+
+    socketRef.current.on("disconnect", () => {
+      console.log("🚗 Client disconnected");
+    });
+
+    socketRef.current.on("ride:alert", (m) => {
+      setIsMsg(m)
+      alert("New ride available!");
+    });
+
+    return () => {
+      socketRef.current.disconnect();
+    };
+  }, []);
   return (
     <>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="/dashboard" element={<DashBoard />} />
+          <Route path="/dashboard" element={<DashBoard socketRef={socketRef} Msg={isMsg} setIsMsg={setIsMsg}/>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/account" element={<AccountManager />} />
           <Route path="/update/personalinfo" element={<EditPersonalInfo />} />
           <Route path="/update/vehicleinfo" element={<EditVehicleInfo />} />
-          <Route path="/update/prfileImage" element={<ProfileImgUpdateForm />} />
+          <Route path="/currentride" element={<CurrentRide socketRef={socketRef} />} />
+          <Route
+            path="/update/prfileImage"
+            element={<ProfileImgUpdateForm />}
+          />
         </Routes>
       </BrowserRouter>
     </>

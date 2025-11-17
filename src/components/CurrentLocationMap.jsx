@@ -1,14 +1,6 @@
-// Import necessary libraries
 import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  useMap,
-  Polyline,
-} from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import io from "socket.io-client";
 
@@ -20,7 +12,6 @@ const carIcon = L.icon({
   iconAnchor: [22, 94],
 });
 
-// 🔑 Simple JWt decoder (client side)
 const decodeJWT = (token) => {
   try {
     const base64Url = token.split(".")[1];
@@ -38,9 +29,6 @@ const decodeJWT = (token) => {
   }
 };
 
-// ================================================
-// ✅ Component: Recenter Map on Current Location
-// ================================================
 function RecenterMapOnCurrentLocation({ location }) {
   const map = useMap();
 
@@ -53,19 +41,14 @@ function RecenterMapOnCurrentLocation({ location }) {
   return null;
 }
 
-// ================================================
-// ✅ Component: CurrentLocationMap
-// ================================================
-function CurrentLocationMap() {
+function CurrentLocationMap({socketRef}) {
   const [location, setLocation] = useState(null);
   const [error, setError] = useState(null);
-  const socketRef = useRef(null);
+  
   const [driverEmail, setDriverEmail] = useState(null);
 
-  // 🧠 Access token from Zustand store
   const token = useDriverStore((state) => state.token);
 
-  // ✉️ Decode token to get email
   useEffect(() => {
     if (token) {
       const decoded = decodeJWT(token);
@@ -80,24 +63,28 @@ function CurrentLocationMap() {
     }
   }, [token]);
 
-  // 🔌 Connect to soket server
-  useEffect(() => {
-    socketRef.current = io("http://localhost:8080", {
-      transports: ["websocket"],
-    });
+  // 🔌 Connect to socket server
+  // useEffect(() => {
+  //   socketRef.current = io("http://localhost:8080", {
+  //     transports: ["websocket"],
+  //   });
 
-    socketRef.current.on("connect", () => {
-      console.log("🚗 Client connected:", socketRef.current.id);
-    });
+  //   socketRef.current.on("connect", () => {
+  //     console.log("🚗 Client connected:", socketRef.current.id);
+  //   });
 
-    socketRef.current.on("disconnect", () => {
-      console.log("🚗 Client disconnected");
-    });
+  //   socketRef.current.on("disconnect", () => {
+  //     console.log("🚗 Client disconnected");
+  //   });
 
-    return () => {
-      socketRef.current.disconnect();
-    };
-  }, []);
+  //   socketRef.current.on("ride:alert", () => {
+  //     alert("New ride available!");
+  //   });
+
+  //   return () => {
+  //     socketRef.current.disconnect();
+  //   };
+  // }, []);
 
   // Watch and send live location
   useEffect(() => {
@@ -111,20 +98,22 @@ function CurrentLocationMap() {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setLocation([coords.lat, coords.lng]);
 
-        // ✅ Emit driver email + location to socket
+        // ✅ Emit driver email + location to socket once connected
         if (socketRef.current && socketRef.current.connected && driverEmail) {
           socketRef.current.emit("driver:location:update", {
+            socketid: socketRef.current.id,
             email: driverEmail,
-            coordinates: coords, // also rename key to match backend
+            coordinates: coords,
           });
         }
       },
       (err) => {
         console.error(err);
-        setError("Unable to retrive your loction");
+        setError("Unable to retrieve your location");
       },
       { enableHighAccuracy: true }
     );
+
     return () => navigator.geolocation.clearWatch(watcher);
   }, [driverEmail]);
 
@@ -145,7 +134,7 @@ function CurrentLocationMap() {
           center={location}
           zoom={13}
           scrollWheelZoom={true}
-          style={{ width: "100%", height: "100%", borderRadius: "1rem" }}
+          style={{ width: "100%", height: "100%", borderRadius: "1rem" , zIndex: 5}}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
