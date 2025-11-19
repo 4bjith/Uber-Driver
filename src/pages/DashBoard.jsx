@@ -10,12 +10,15 @@ import CurrentLocationMap from "../components/CurrentLocationMap";
 import useDriverStore from "../Zustand/DriverAuth";
 import { toast } from "react-toastify";
 import api from "../api/axiosClint";
+import { useNavigate } from "react-router-dom";
+
 
 function DashBoard({ socketRef, Msg, setIsMsg }) {
   // const [isMsg, setIsMsg] = useState(false);
   const [email, setEmail] = useState(null);
   const token = useDriverStore((state) => state.token);
   console.log("message :", Msg);
+  const navigate = useNavigate();
   const data = [
     {
       start: "kannur",
@@ -98,6 +101,7 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
       driverEmail: email,
     });
     toast.success("Ride accepted");
+    navigate("/currentride");
   } catch (err) {
     console.error("Failed to accept ride", err);
     toast.error("Failed to accept ride");

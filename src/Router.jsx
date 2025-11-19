@@ -9,7 +9,6 @@ import ProfileImgUpdateForm from "./pages/ProfileImageUpdateForm";
 import io from "socket.io-client";
 import { useRef, useState } from "react";
 import { useEffect } from "react";
-import { toast } from "react-toastify";
 import CurrentRide from "./pages/CurrentRide";
 
 function router() {
@@ -17,9 +16,7 @@ function router() {
   const socketRef = useRef(null);
   // 🔌 Connect to socket server
   useEffect(() => {
-    socketRef.current = io("http://localhost:8080", {
-      transports: ["websocket"],
-    });
+    socketRef.current = io("http://localhost:8080");
 
     socketRef.current.on("connect", () => {
       console.log("🚗 Client connected:", socketRef.current.id);
@@ -31,6 +28,7 @@ function router() {
 
     socketRef.current.on("ride:alert", (m) => {
       setIsMsg(m)
+      console.log("🚨 New ride alert received:", m);
       alert("New ride available!");
     });
 
