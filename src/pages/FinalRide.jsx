@@ -44,6 +44,22 @@ function FitBounds({ points }) {
   return null;
 }
 
+// Haversine distance calculator (in meters)
+const calculateDistance = (coord1, coord2) => {
+    if (!coord1 || !coord2) return;
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const R = 6371; // km
+    const dLat = toRad(coord2.lat - coord1.lat);
+    const dLng = toRad(coord2.lng - coord1.lng);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(coord1.lat)) *
+        Math.cos(toRad(coord2.lat)) *
+        Math.sin(dLng / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return (R * c).toFixed(2);
+  };
+
 export default function FinalRide({socketRef}) {
     const [currentLocation, setCurrentLocation] = useState(null);
     const [destination, setDestination] = useState(null);
@@ -112,9 +128,25 @@ export default function FinalRide({socketRef}) {
   }
 }, [rideInfo]);
 
+useEffect(() => {
+    if (!rideId || !destination || !currentLocation) return;
+  socketRef.current?.emit("driver:ridestart", { rideId, destination ,currentLocation });
+}, [rideId, socketRef, destination, currentLocation]);
   
+
+const handleEndRide = async () => {
+    if(!currentLocation || !destination) return;
+    const distance = calculateDistance(currentLocation,destination);
+    toast.success(`Ride Ended! Total Distance: ${distance} km`);
+   
+        const res = await api.put("/ride/end", { rideId });
+        toast.info("You have reached your destination!");
+        
+    
+    console.log("Ride Ended",distance);
+  }
   return (
-    <div className="w-full h-screen">
+    <div className="w-full h-screen relative">
       <MapContainer
         center={center}
         zoom={13}
@@ -138,6 +170,9 @@ export default function FinalRide({socketRef}) {
         )}  
         {route.length > 0 && <Polyline positions={route} weight={5} color="blue" />}
       </MapContainer>
+        <div className="absolute z-999 bottom-8 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded-lg shadow-lg">   
+        <button onClick={handleEndRide}>End Ride</button>   
+        </div>
     </div>
   )
 }
