@@ -6,10 +6,13 @@ const useDriverStore = create(
     (set) => ({
       token: null,
       driver: null,
+      rideId: null,
       // ✅ Correct: accepts a new token and saves it
       setToken: (newToken) => set({ token: newToken }),
 
       setDriver: (newDriver) => set({ driver: newDriver }),
+
+      setRideId: (newRide) => set({rideId: newRide}),
 
       // ✅ Clear token on logout
       logout: () => set({ token: null }),

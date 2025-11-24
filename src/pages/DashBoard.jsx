@@ -17,6 +17,7 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
   // const [isMsg, setIsMsg] = useState(false);
   const [email, setEmail] = useState(null);
   const token = useDriverStore((state) => state.token);
+  const setRide = useDriverStore((state) => state.setRide)
   console.log("message :", Msg);
   const navigate = useNavigate();
   const data = [
@@ -95,13 +96,14 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
   // console.log("Email is :",email)
 
   const handleSubmit = async () => {
+    localStorage.setItem("rideId", Msg.rideId)
   try {
     await api.post("/driver/acceptride", {
       rideId: Msg.rideId,
       driverEmail: email,
     });
     toast.success("Ride accepted");
-    navigate("/currentride");
+    navigate(`/currentride?id=${Msg.rideId}`);
   } catch (err) {
     console.error("Failed to accept ride", err);
     toast.error("Failed to accept ride");

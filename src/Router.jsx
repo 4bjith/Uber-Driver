@@ -10,6 +10,7 @@ import io from "socket.io-client";
 import { useRef, useState } from "react";
 import { useEffect } from "react";
 import CurrentRide from "./pages/CurrentRide";
+import FinalRide from "./pages/FinalRide";
 
 function router() {
   const [isMsg, setIsMsg] = useState("");
@@ -48,6 +49,7 @@ function router() {
           <Route path="/update/personalinfo" element={<EditPersonalInfo />} />
           <Route path="/update/vehicleinfo" element={<EditVehicleInfo />} />
           <Route path="/currentride" element={<CurrentRide socketRef={socketRef} />} />
+          <Route path="/finalride" element={<FinalRide socketRef={socketRef} />} /> 
           <Route
             path="/update/prfileImage"
             element={<ProfileImgUpdateForm />}
