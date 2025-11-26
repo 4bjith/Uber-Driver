@@ -10,7 +10,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { use, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
 // Default marker icons
@@ -66,6 +66,7 @@ export default function FinalRide({socketRef}) {
     const [route, setRoute] = useState([]);
     const location = useLocation();
     const rideId = new URLSearchParams(location.search).get("id");
+    const navigate = useNavigate()
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -106,9 +107,7 @@ export default function FinalRide({socketRef}) {
     getRoute();
   }, [currentLocation, destination]);
 
-  const center = currentLocation
-    ? [currentLocation.lat, currentLocation.lng]
-    : [20.5937, 78.9629];
+  
 
     const { data: rideInfo } = useQuery({
     queryKey: ["rideinfo", rideId],
@@ -135,16 +134,32 @@ useEffect(() => {
   
 
 const handleEndRide = async () => {
-    if(!currentLocation || !destination) return;
-    const distance = calculateDistance(currentLocation,destination);
-    toast.success(`Ride Ended! Total Distance: ${distance} km`);
-   
-        const res = await api.put("/ride/end", { rideId });
-        toast.info("You have reached your destination!");
-        
+  if (!currentLocation || !destination) return;
+
+  const distance = calculateDistance(currentLocation, destination);
+  toast.success(`Ride Ended! Total Distance: ${distance} km`);
+
+  try {
+    const { data } = await api.put("/ride/end", { rideId });
+    console.log(data);
+    if (data){
+      toast.info("You have reached your destination!");
+      navigate("/dashboard")
+    }
     
-    console.log("Ride Ended",distance);
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to end ride");
   }
+
+  console.log("Ride Ended", distance);
+};
+
+
+  const center = currentLocation
+    ? [currentLocation.lat, currentLocation.lng]
+    : [20.5937, 78.9629];
+    
   return (
     <div className="w-full h-screen relative">
       <MapContainer
