@@ -1,7 +1,7 @@
 import React from "react";
 import { MdPercent } from "react-icons/md";
 
-const TotalTripsCard = () => {
+const TotalTripsCard = ({ rides }) => {
   const bars = [
     { month: "Dec", height: "40%", color: "bg-blue-500" },
     { month: "Jan", height: "55%", color: "bg-blue-400" },
@@ -9,6 +9,8 @@ const TotalTripsCard = () => {
     { month: "Mar", height: "70%", color: "bg-green-400" },
     { month: "Apr", height: "30%", color: "bg-blue-200" },
   ];
+  // if (rides.request)
+  const totalTrips = rides?.length
 
   return (
     <div className="w-full h-[130px] md:h-[160px] bg-white rounded-2xl shadow-sm p-4 flex flex-col justify-between">
@@ -23,7 +25,7 @@ const TotalTripsCard = () => {
       {/* Stats */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-4xl font-semibold text-gray-800">84</h2>
+          <h2 className="text-4xl font-semibold text-gray-800">{totalTrips ? totalTrips : 0}</h2>
           <div className="flex items-center gap-2 mt-1">
             <span className="bg-lime-200 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">
               +2.1%

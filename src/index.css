@@ -1,1 +1,17 @@
-@import "tailwindcss"
+@import "tailwindcss";
+
+/* Your custom CSS is still fine here */
+@keyframes pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-pop {
+  animation: pop 0.2s ease-out;
+}

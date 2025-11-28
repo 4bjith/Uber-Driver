@@ -11,6 +11,7 @@ import { useRef, useState } from "react";
 import { useEffect } from "react";
 import CurrentRide from "./pages/CurrentRide";
 import FinalRide from "./pages/FinalRide";
+import RideHistory from "./pages/RideHistory";
 
 function router() {
   const [isMsg, setIsMsg] = useState("");
@@ -50,6 +51,7 @@ function router() {
           <Route path="/update/vehicleinfo" element={<EditVehicleInfo />} />
           <Route path="/currentride" element={<CurrentRide socketRef={socketRef} />} />
           <Route path="/finalride" element={<FinalRide socketRef={socketRef} />} /> 
+          <Route path="/trips" element={<RideHistory />} />
           <Route
             path="/update/prfileImage"
             element={<ProfileImgUpdateForm />}

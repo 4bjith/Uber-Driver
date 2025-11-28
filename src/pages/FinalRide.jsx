@@ -46,39 +46,39 @@ function FitBounds({ points }) {
 
 // Haversine distance calculator (in meters)
 const calculateDistance = (coord1, coord2) => {
-    if (!coord1 || !coord2) return;
-    const toRad = (deg) => (deg * Math.PI) / 180;
-    const R = 6371; // km
-    const dLat = toRad(coord2.lat - coord1.lat);
-    const dLng = toRad(coord2.lng - coord1.lng);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(coord1.lat)) *
-        Math.cos(toRad(coord2.lat)) *
-        Math.sin(dLng / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return (R * c).toFixed(2);
-  };
+  if (!coord1 || !coord2) return;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const R = 6371; // km
+  const dLat = toRad(coord2.lat - coord1.lat);
+  const dLng = toRad(coord2.lng - coord1.lng);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(coord1.lat)) *
+    Math.cos(toRad(coord2.lat)) *
+    Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return (R * c).toFixed(2);
+};
 
-export default function FinalRide({socketRef}) {
-    const [currentLocation, setCurrentLocation] = useState(null);
-    const [destination, setDestination] = useState(null);
-    const [route, setRoute] = useState([]);
-    const location = useLocation();
-    const rideId = new URLSearchParams(location.search).get("id");
-    const navigate = useNavigate()
+export default function FinalRide({ socketRef }) {
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [destination, setDestination] = useState(null);
+  const [route, setRoute] = useState([]);
+  const location = useLocation();
+  const rideId = new URLSearchParams(location.search).get("id");
+  const navigate = useNavigate()
 
-    useEffect(() => {
-        if (navigator.geolocation) {
-            const watchId = navigator.geolocation.watchPosition((position) => {
-                const { latitude, longitude } = position.coords;
-                setCurrentLocation({ lat: latitude, lng: longitude });
-            });
-            return () => navigator.geolocation.clearWatch(watchId);
-        }
-    }, []);
+  useEffect(() => {
+    if (navigator.geolocation) {
+      const watchId = navigator.geolocation.watchPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        setCurrentLocation({ lat: latitude, lng: longitude });
+      });
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, []);
 
-    // Route drawing
+  // Route drawing
   const getRoute = async () => {
     if (!currentLocation || !destination) return;
 
@@ -107,9 +107,9 @@ export default function FinalRide({socketRef}) {
     getRoute();
   }, [currentLocation, destination]);
 
-  
 
-    const { data: rideInfo } = useQuery({
+
+  const { data: rideInfo } = useQuery({
     queryKey: ["rideinfo", rideId],
     queryFn: async () => {
       const res = await api.get("/ride/info", {
@@ -121,45 +121,45 @@ export default function FinalRide({socketRef}) {
   });
 
   useEffect(() => {
-  if (rideInfo?.dropoffCoordinates?.coordinates) {
-    const [lat, lng] = rideInfo.dropoffCoordinates.coordinates;
-    setDestination({ lat, lng });
-  }
-}, [rideInfo]);
-
-useEffect(() => {
-    if (!rideId || !destination || !currentLocation) return;
-  socketRef.current?.emit("driver:ridestart", { rideId, destination ,currentLocation });
-}, [rideId, socketRef, destination, currentLocation]);
-  
-
-const handleEndRide = async () => {
-  if (!currentLocation || !destination) return;
-
-  const distance = calculateDistance(currentLocation, destination);
-  toast.success(`Ride Ended! Total Distance: ${distance} km`);
-
-  try {
-    const { data } = await api.put("/ride/end", { rideId });
-    console.log(data);
-    if (data){
-      toast.info("You have reached your destination!");
-      navigate("/dashboard")
+    if (rideInfo?.dropoffCoordinates?.coordinates) {
+      const [lat, lng] = rideInfo.dropoffCoordinates.coordinates;
+      setDestination({ lat, lng });
     }
-    
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to end ride");
-  }
+  }, [rideInfo]);
 
-  console.log("Ride Ended", distance);
-};
+  useEffect(() => {
+    if (!rideId || !destination || !currentLocation) return;
+    socketRef.current?.emit("driver:ridestart", { rideId, destination, currentLocation });
+  }, [rideId, socketRef, destination, currentLocation]);
+
+
+  const handleEndRide = async () => {
+    if (!currentLocation || !destination) return;
+
+    const distance = calculateDistance(currentLocation, destination);
+    toast.success(`Ride Ended! Total Distance: ${distance} km`);
+
+    try {
+      const { data } = await api.put("/ride/end", { rideId });
+      console.log(data);
+      if (data) {
+        toast.info("You have reached your destination!");
+        navigate("/dashboard")
+      }
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to end ride");
+    }
+
+    console.log("Ride Ended", distance);
+  };
 
 
   const center = currentLocation
     ? [currentLocation.lat, currentLocation.lng]
     : [20.5937, 78.9629];
-    
+
   return (
     <div className="w-full h-screen relative">
       <MapContainer
@@ -172,22 +172,22 @@ const handleEndRide = async () => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        {/* <FitBounds points={[currentLocation, destination].filter(Boolean)} /> */}
+        <FitBounds points={[currentLocation, destination].filter(Boolean)} />
         {currentLocation && (
           <Marker position={[currentLocation.lat, currentLocation.lng]} icon={carIcon}>
             <Popup>Your Current Location</Popup>
           </Marker>
-        )}  
+        )}
         {destination && (
           <Marker position={[destination.lat, destination.lng]}>
             <Popup>Destination</Popup>
           </Marker>
-        )}  
+        )}
         {route.length > 0 && <Polyline positions={route} weight={5} color="blue" />}
       </MapContainer>
-        <div className="absolute z-999 bottom-8 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded-lg shadow-lg">   
-        <button onClick={handleEndRide}>End Ride</button>   
-        </div>
+      <div className="absolute z-999 bottom-8 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded-lg shadow-lg">
+        <button onClick={handleEndRide}>End Ride</button>
+      </div>
     </div>
   )
 }

@@ -54,7 +54,7 @@ function CurrentLocationMap({socketRef}) {
       const decoded = decodeJWT(token);
       if (decoded?.email) {
         setDriverEmail(decoded.email);
-        console.log("👨‍✈️ Driver email:", decoded.email);
+       
       } else {
         console.warn("No email found in token");
       }

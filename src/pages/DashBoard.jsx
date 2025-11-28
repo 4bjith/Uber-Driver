@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
-import DashMenu from "../components/DashMenu";
+import { useEffect, useState } from "react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import TotalTripsCard from "../components/TotTrip";
 import DistanceDrivenCard from "../components/Distance";
 import DrivingHoursCard from "../components/DriveHours";
@@ -11,175 +12,144 @@ import useDriverStore from "../Zustand/DriverAuth";
 import { toast } from "react-toastify";
 import api from "../api/axiosClint";
 import { useNavigate } from "react-router-dom";
-
+import { useQuery } from "@tanstack/react-query";
 
 function DashBoard({ socketRef, Msg, setIsMsg }) {
   // const [isMsg, setIsMsg] = useState(false);
   const [email, setEmail] = useState(null);
   const token = useDriverStore((state) => state.token);
-  const setRide = useDriverStore((state) => state.setRide)
-  console.log("message :", Msg);
+  
   const navigate = useNavigate();
-  const data = [
-    {
-      start: "kannur",
-      end: "Thalassery",
-      duration: "40 min",
-      date: "13/10/2025",
-      time: "10:30 AM",
-      status: "Completed",
+  const [rides, setRides] = useState([]);
+
+  const { data } = useQuery({
+    queryKey: ["driver", "allrides"],
+    queryFn: async () => {
+      const response = await api.get("/allrides", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
     },
-    {
-      start: "Thalassery",
-      end: "Panoor",
-      duration: "30 min",
-      date: "13/10/2025",
-      time: "11:30 AM",
-      status: "Completed",
-    },
-    {
-      start: "kuthuparamba",
-      end: "Kannur",
-      duration: "45 min",
-      date: "13/10/2025",
-      time: "01:30 PM",
-      status: "Completed",
-    },
-    {
-      start: "Kannur",
-      end: "Mahi",
-      duration: "01:00 Hr",
-      date: "13/10/2025",
-      time: "02:00 PM",
-      status: "Cancled",
-    },
-    {
-      start: "kannur",
-      end: "Thalassery",
-      duration: "40 min",
-      date: "14/10/2025",
-      time: "10:30 AM",
-      status: "Running",
-    },
-  ];
-  const decodeJWT = (token) => {
-    try {
-      const base64Url = token.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split("")
-          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
-      );
-      return JSON.parse(jsonPayload);
-    } catch (err) {
-      console.log("Error decoding JWT: ", err);
-      return null;
-    }
-  };
+  });
 
   useEffect(() => {
-    if (token) {
-      const decoded = decodeJWT(token);
-      if (decoded?.email) {
-        setEmail(decoded.email);
-        // console.log("👨‍✈️ Driver email:", decoded.email);
-      } else {
-        console.warn("No email found in token");
-      }
-    } else {
-      console.warn("No token found");
+    if (data) {
+      setRides(data?.data);
     }
-  }, [token]);
-
-  // console.log("Email is :",email)
+  }, [data]);
+  
 
   const handleSubmit = async () => {
     localStorage.setItem("rideId", Msg.rideId)
-  try {
-    await api.post("/driver/acceptride", {
-      rideId: Msg.rideId,
-      driverEmail: email,
-    });
-    toast.success("Ride accepted");
-    navigate(`/currentride?id=${Msg.rideId}`);
-  } catch (err) {
-    console.error("Failed to accept ride", err);
-    toast.error("Failed to accept ride");
-  }
-};
+    try {
+      await api.post("/driver/acceptride", {
+        rideId: Msg.rideId,
+        driverEmail: email,
+      });
+      toast.success("Ride accepted");
+      setIsMsg(null);
+      navigate(`/currentride?id=${Msg.rideId}`);
+    } catch (err) {
+      console.error("Failed to accept ride", err);
+      toast.error("Failed to accept ride");
+    }
+  };
 
 
   return (
-    <div className="w-full min-h-screen bg-gray-100 p-5 grid grid-cols-[15%_1fr] relative">
+    <div className="w-full h-screen flex flex-col bg-gray-100 relative overflow-hidden">
       {Msg && (
-        <div className="absolute inset-0 z-50 flex justify-center items-center bg-black/40">
-          <div className="bg-white w-[400px] max-w-[90%] p-6 rounded-2xl shadow-xl text-center">
-            <h1 className="text-xl font-semibold mb-4">Ride Request</h1>
-            <p className="text-gray-800">Pickup: {Msg.pickup}</p>
-            <p className="text-gray-800">Dropoff: {Msg.dropoff}</p>
-            <p className="text-gray-600 mb-4">Ride ID: {Msg.rideId}</p>
-            <button
-              onClick={handleSubmit}
-              className="mt-2 px-5 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all"
-            >
-              Accept
-            </button>
-            <button onClick={() => setIsMsg("")} className="mt-2 px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all">
-              Reject
-            </button>
-          </div>
-        </div>
-      )}
+  <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/50 backdrop-blur-sm">
 
-      {/* Sidebar */}
-      <div className="sticky top-0 h-screen">
-        <DashMenu />
+    {/* Popup Card */}
+    <div className="bg-white w-[420px] max-w-[90%] p-6 rounded-2xl shadow-2xl animate-pop">
+
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">🚗 New Ride Request</h1>
+
+      <div className="text-left space-y-2 mb-4">
+        <div className="p-3 bg-gray-100 rounded-lg">
+          <p className="text-gray-500 text-sm">Pickup</p>
+          <p className="font-medium text-gray-900">{Msg.pickup}</p>
+        </div>
+
+        <div className="p-3 bg-gray-100 rounded-lg">
+          <p className="text-gray-500 text-sm">Dropoff</p>
+          <p className="font-medium text-gray-900">{Msg.dropoff}</p>
+        </div>
+
+        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <p className="text-gray-500 text-sm">Ride ID</p>
+          <p className="text-gray-700">{Msg.rideId}</p>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="w-full px-5 grid gap-5">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <TotalTripsCard />
-          <DistanceDrivenCard />
-          <DrivingHoursCard />
-        </div>
+      {/* Buttons */}
+      <div className="flex gap-3 mt-5">
+        <button
+          onClick={handleSubmit}
+          className="flex-1 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition"
+        >
+          Accept
+        </button>
 
-        {/* Current Trip + Map */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <CurrentTripCard />
-          <div className="h-[400px] bg-white p-4 rounded-2xl relative">
-            <div className="w-full h-full rounded-2xl overflow-hidden">
-              <CurrentLocationMap socketRef={socketRef} />
+        <button
+          onClick={() => setIsMsg(null)}
+          className="flex-1 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition"
+        >
+          Reject
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
+
+      {/* Top Navbar */}
+      <div className="h-[12vh]">
+        <Navbar />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 h-[88vh] overflow-y-auto flex flex-col w-full">
+        <div className="p-5 grid gap-5 flex-1">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <TotalTripsCard rides={rides} />
+            <DistanceDrivenCard />
+            <DrivingHoursCard />
+          </div>
+
+          {/* Current Trip + Map */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <CurrentTripCard Msg={Msg} handleSubmit={handleSubmit} setIsMsg={setIsMsg}/>
+            <div className="h-[400px] bg-white p-4 rounded-2xl relative shadow-sm">
+              <div className="w-full h-full rounded-2xl overflow-hidden">
+                <CurrentLocationMap socketRef={socketRef} />
+              </div>
+              <h2 className="absolute top-2 left-2 bg-white px-3 py-1 rounded-br-2xl text-sm font-semibold shadow-sm">
+                Live Map
+              </h2>
             </div>
-            <h2 className="absolute top-2 left-2 bg-white px-2 py-1 rounded-br-2xl text-sm font-semibold">
-              Map
-            </h2>
+          </div>
+
+          {/* Schedule Section */}
+          <div className="bg-white p-6 rounded-xl shadow-sm h-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Trip Schedule</h2>
+              <BsArrowUpRightCircle className="text-xl text-gray-500 cursor-pointer hover:text-black transition-colors" />
+            </div>
+            <div className="flex flex-col-reverse gap-3">
+              <Trips />
+            </div>
           </div>
         </div>
 
-        {/* Schedule Section */}
-        <div className="bg-white p-4 rounded-xl h-auto">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-sm font-semibold">Schedule of trips</h2>
-            <BsArrowUpRightCircle />
-          </div>
-          <div className="flex flex-col-reverse gap-3">
-            {data.map((item, index) => (
-              <Trips
-                key={index}
-                start={item.start}
-                end={item.end}
-                duration={item.duration}
-                date={item.date}
-                time={item.time}
-                status={item.status}
-              />
-            ))}
-          </div>
-        </div>
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );
