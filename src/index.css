@@ -1,11 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 @import "tailwindcss";
 
-/* Your custom CSS is still fine here */
+@theme {
+  --font-sans: 'Outfit', sans-serif;
+  --color-primary: #000000;
+  --color-secondary: #ffffff;
+  --color-accent: #f8f8f8;
+  --color-dark-gray: #1a1a1a;
+}
+
+:root {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--color-secondary);
+  color: var(--color-primary);
+}
+
+body {
+  @apply antialiased;
+}
+
+/* Custom Animations */
 @keyframes pop {
   0% {
     transform: scale(0.8);
     opacity: 0;
   }
+
   100% {
     transform: scale(1);
     opacity: 1;

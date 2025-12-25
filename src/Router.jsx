@@ -12,20 +12,24 @@ import { useEffect } from "react";
 import CurrentRide from "./pages/CurrentRide";
 import FinalRide from "./pages/FinalRide";
 import RideHistory from "./pages/RideHistory";
+import useDriverStore from "./Zustand/DriverAuth";
 
 function router() {
   const [isMsg, setIsMsg] = useState("");
   const socketRef = useRef(null);
+  const setSocket = useDriverStore((state)=> state.setSocket)
   // 🔌 Connect to socket server
   useEffect(() => {
     socketRef.current = io("http://localhost:8080");
 
     socketRef.current.on("connect", () => {
       console.log("🚗 Client connected:", socketRef.current.id);
+      setSocket(socketRef.current.id)
     });
 
     socketRef.current.on("disconnect", () => {
       console.log("🚗 Client disconnected");
+      setSocket(null)
     });
 
     socketRef.current.on("ride:alert", (m) => {

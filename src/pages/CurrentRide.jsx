@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 import api from "../api/axiosClint";
+import useDriverStore from "../Zustand/DriverAuth";
 const defaultIcon = L.icon({ iconUrl, shadowUrl: iconShadow });
 L.Marker.prototype.options.icon = defaultIcon;
 
@@ -61,6 +62,7 @@ export default function DriverCurrentRide({ socketRef, driverEmail }) {
   const rideId = new URLSearchParams(location.search).get("id");
   const otp = useRef();
   const navigate = useNavigate();
+  const socket = useDriverStore((state) => state.socket)
 
   // Driver GPS
   useEffect(() => {
@@ -92,12 +94,19 @@ export default function DriverCurrentRide({ socketRef, driverEmail }) {
 
   // Receive user location
   useEffect(() => {
-    if (!socketRef.current) return;
+    if (!socketRef.current || !socket) return;
 
-    socketRef.current.on("user:location", (data) => {
-      if (!data) return;
-      setUserLocation({ lat: data.lat, lng: data.lng });
-    });
+    if (socketRef.current) {
+      socketRef.current.on("user:location", (data) => {
+        if (!data) return;
+        setUserLocation({ lat: data.lat, lng: data.lng });
+      });
+    } else {
+      socket.on("user:location", (data) => {
+        if (!data) return;
+        setUserLocation({ lat: data.lat, lng: data.lng });
+      });
+    }
   }, []);
 
   // Route drawing
@@ -152,70 +161,100 @@ export default function DriverCurrentRide({ socketRef, driverEmail }) {
   console.log("Driver:", rideInfo?.driverId);
 
   return (
-    <div className="w-screen h-80vh flex flex-col bg-gray-50">
-      <MapContainer
-        center={center}
-        zoom={15}
-        style={{ height: "80vh", width: "100vw" }}
-      >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+    <div className="w-full h-screen flex flex-col relative overflow-hidden bg-gray-100">
+      {/* Map takes full height */}
+      <div className="absolute inset-0 z-0">
+        <MapContainer
+          center={center}
+          zoom={15}
+          style={{ height: "100%", width: "100%" }}
+          zoomControl={false}
+        >
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <FitBounds points={[driverLocation, userLocation].filter(Boolean)} />
 
-        <FitBounds points={[driverLocation, userLocation].filter(Boolean)} />
+          {driverLocation && (
+            <Marker position={[driverLocation.lat, driverLocation.lng]} icon={carIcon}>
+              <Popup>You (Driver)</Popup>
+            </Marker>
+          )}
 
-        {driverLocation && (
-          <Marker
-            position={[driverLocation.lat, driverLocation.lng]}
-            icon={carIcon}
-          >
-            <Popup>You (Driver)</Popup>
-          </Marker>
-        )}
+          {userLocation && (
+            <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
+              <Popup>Passenger</Popup>
+            </Marker>
+          )}
 
-        {userLocation && (
-          <Marker
-            position={[userLocation.lat, userLocation.lng]}
-            icon={userIcon}
-          >
-            <Popup>User</Popup>
-          </Marker>
-        )}
+          {route.length > 0 && (
+            <Polyline positions={route} color="black" weight={4} opacity={0.8} />
+          )}
+        </MapContainer>
+      </div>
 
-        {route.length > 0 && (
-          <Polyline positions={route} color="blue" weight={5} opacity={0.7} />
-        )}
-      </MapContainer>
+      {/* Floating Bottom Panel */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] p-6 animate-slide-up">
+        {/* Drag handle visual */}
+        <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-6"></div>
 
-      {/* FOOTER SECTION */}
-      <div className="h-20 flex justify-evenly items-center bg-green-900 text-yellow-400">
-        {isOtp ? (
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <input
-              type="text"
-              placeholder="otp"
-              ref={otp}
-              className="bg-gray-300 rounded-lg py-1.5 px-2 text-black"
-            />{" "}
-            <button onClick={()=>{
-              if(rideInfo?.otp === otp.current.value){
-                toast.success("OTP Verified. Ride Started!");
-                navigate(`/finalride?id=${rideId}`);
-                setIsOtp(false);
-              } else{
-                toast.error("Invalid OTP. Please try again.");
-              }
-            }} className="bg-gray-300 p-1.5">✔️</button>{" "}
+            <h2 className="text-2xl font-bold text-gray-900">{rideInfo?.passenger?.name || "Passenger"}</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
+                Running
+              </span>
+              <span className="text-gray-500 text-sm">{rideInfo?.distance ? `${rideInfo.distance} km total` : "Calculating..."}</span>
+            </div>
           </div>
-        ) : (
-          <button
-            className="px-3 py-1.5 bg-orange-500 rounded-lg cursor-pointer"
-            onClick={() => setIsOtp(true)}
-          >
-            Arrived 🚦
-          </button>
-        )}
 
-        <p>Distance: {rideInfo?.distance ?? "..."} km</p>
-        <p>User Name: {rideInfo?.passenger?.name ?? "..."}</p>
+          {/* Call Button (Mock) */}
+          <button className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200">
+            📞
+          </button>
+        </div>
+
+        <hr className="border-gray-100 mb-6" />
+
+        {/* Action Section */}
+        <div className="space-y-4">
+          {!isOtp ? (
+            <button
+              onClick={() => setIsOtp(true)}
+              className="w-full py-4 bg-black text-white rounded-xl text-lg font-semibold shadow-lg hover:bg-gray-800 transition-transform active:scale-95 flex items-center justify-center gap-2"
+            >
+              <span>Arrived at Pickup</span>
+              <span>📍</span>
+            </button>
+          ) : (
+            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4">
+              <label className="text-sm font-medium text-gray-600 ml-1">Enter Passenger OTP</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  maxLength="4"
+                  placeholder="0 0 0 0"
+                  ref={otp}
+                  className="flex-1 bg-gray-100 border-2 border-transparent focus:border-black rounded-xl text-center text-2xl font-bold tracking-widest py-3 outline-none transition-colors"
+                  inputMode="numeric"
+                />
+                <button
+                  onClick={() => {
+                    if (rideInfo?.otp === otp.current.value) {
+                      toast.success("OTP Verified. Starting Ride...");
+                      navigate(`/finalride?id=${rideId}`);
+                      setIsOtp(false);
+                    } else {
+                      toast.error("Invalid OTP. Ask passenger for code.");
+                    }
+                  }}
+                  className="bg-black text-white px-6 rounded-xl font-bold text-xl hover:bg-gray-800 transition-colors"
+                >
+                  GO
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

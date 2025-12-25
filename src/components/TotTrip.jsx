@@ -10,8 +10,8 @@ const TotalTripsCard = ({ rides }) => {
     { month: "Apr", height: "30%", color: "bg-blue-200" },
   ];
   // if (rides.request)
-  const totalTrips = rides?.length
-
+  const totalTrips = rides?.filter((i)=> i.status === "completed").length
+  // alert(rides.filter((i)=> i.status === "completed").length)
   return (
     <div className="w-full h-[130px] md:h-[160px] bg-white rounded-2xl shadow-sm p-4 flex flex-col justify-between">
       {/* Header */}

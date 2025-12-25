@@ -4,20 +4,18 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import useDriverStore from "../Zustand/DriverAuth";
 import api from "../api/axiosClint";
-
+import { FiMapPin, FiNavigation, FiCalendar, FiClock, FiChevronDown, FiChevronUp, FiChevronLeft, FiChevronRight, FiDollarSign } from "react-icons/fi";
 
 export default function RideHistory() {
   const [rides, setRides] = useState([]);
   const token = useDriverStore((state) => state.token);
-  
-
-  // Track which row is open
+  const [page, setPage] = useState(1);
   const [openRow, setOpenRow] = useState(null);
 
-  const { data } = useQuery({
-    queryKey: ["driver", "allrides"],
+  const { data, isLoading } = useQuery({
+    queryKey: ["driver", "allrides", page],
     queryFn: async () => {
-      const response = await api.get("/allrides", {
+      const response = await api.get(`/allrides?page=${page}&limit=6`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -25,6 +23,7 @@ export default function RideHistory() {
 
       return response.data;
     },
+    keepPreviousData: true,
   });
 
   useEffect(() => {
@@ -33,71 +32,217 @@ export default function RideHistory() {
     }
   }, [data]);
 
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "ongoing":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  if (isLoading && rides.length === 0) {
+    return (
+      <div className="w-full min-h-screen bg-gray-100 flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex justify-center items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full min-h-screen bg-gray-100">
+    <div className="w-full min-h-screen bg-gray-100 flex flex-col">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto p-6 mt-4">
-        <h1 className="text-2xl font-bold mb-6">Ride History</h1>
+      <div className="flex-grow w-full max-w-6xl mx-auto p-4 sm:p-6 mt-4">
+        <h1 className="text-2xl font-bold mb-6 text-gray-900">Ride History</h1>
 
-        {/* Table Container */}
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-          <table className="w-full border-collapse">
-            <thead className="bg-gray-200 text-gray-700">
-              <tr>
-                <th className="p-3 text-left">Ride ID</th>
-                <th className="p-3 text-left">Pickup</th>
-                <th className="p-3 text-left">Destination</th>
-                <th className="p-3 text-left">Status</th>
-                <th className="p-3 text-center">View</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {rides.map((i) => (
-                <>
-                  {/* Table Row */}
-                  <tr
-                    key={i._id}
-                    className="border-b hover:bg-gray-50 transition"
-                  >
-                    <td className="p-3">{i._id}</td>
-                    <td className="p-3">{i.pickup}</td>
-                    <td className="p-3">{i.dropoff}</td>
-                    <td className="p-3 capitalize">{i.status}</td>
-
-                    <td
-                      className="p-3 text-center cursor-pointer text-blue-600 font-bold"
-                      onClick={() =>
-                        setOpenRow(openRow === i._id ? null : i._id)
-                      }
-                    >
-                      {openRow === i._id ? "▲" : "▼"}
-                    </td>
-                  </tr>
-
-                  {/* Expanded details */}
-                  {openRow === i._id && (
-                    <tr className="bg-gray-50">
-                      <td colSpan={5} className="p-5">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
-                          <p><span className="font-semibold">Passenger:</span> {i.passenger?.name}</p>
-                          <p><span className="font-semibold">Distance:</span> {i.distance} km</p>
-                          <p><span className="font-semibold">Earnings:</span> ₹{i.earnings.toFixed(2)}</p>
-                          <p><span className="font-semibold">Requested At:</span> {i.requestedAt}</p>
-                          <p><span className="font-semibold">Completed At:</span> {i.completedAt}</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
-          <div className="w-full flex justify-center">
-
+        {(!isLoading && rides.length === 0) ? (
+          <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
+            <div className="mx-auto h-12 w-12 text-gray-400 mb-3">
+              <FiCalendar size={48} />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900">No rides found</h3>
+            <p className="mt-1 text-gray-500">You haven't completed any rides yet.</p>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
+              <table className="w-full border-collapse">
+                <thead className="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
+                  <tr>
+                    <th className="p-4 text-left font-medium">Ride ID</th>
+                    <th className="p-4 text-left font-medium">Route</th>
+                    <th className="p-4 text-left font-medium">Date</th>
+                    <th className="p-4 text-left font-medium">Earnings</th>
+                    <th className="p-4 text-left font-medium">Status</th>
+                    <th className="p-4 text-center font-medium">Details</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-100">
+                  {rides.map((ride) => (
+                    <>
+                      <tr
+                        key={ride._id}
+                        className="hover:bg-gray-50 transition-colors duration-150"
+                      >
+                        <td className="p-4 text-sm font-mono text-gray-500">
+                          #{ride._id.slice(-6)}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2 text-sm text-gray-900">
+                              <FiMapPin className="text-green-600 flex-shrink-0" size={14} />
+                              <span className="truncate max-w-[200px]" title={ride.pickup}>{ride.pickup}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-900">
+                              <FiNavigation className="text-red-600 flex-shrink-0" size={14} />
+                              <span className="truncate max-w-[200px]" title={ride.dropoff}>{ride.dropoff}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm text-gray-600">
+                          {new Date(ride.requestedAt).toLocaleDateString()}
+                        </td>
+                        <td className="p-4 text-sm font-medium text-gray-900">
+                          ₹{ride.earnings?.toFixed(2) || "0.00"}
+                        </td>
+                        <td className="p-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                              ride.status
+                            )}`}
+                          >
+                            {ride.status}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() =>
+                              setOpenRow(openRow === ride._id ? null : ride._id)
+                            }
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
+                          >
+                            {openRow === ride._id ? <FiChevronUp /> : <FiChevronDown />}
+                          </button>
+                        </td>
+                      </tr>
+
+                      {/* Expanded details */}
+                      {openRow === ride._id && (
+                        <tr className="bg-gray-50/50">
+                          <td colSpan={6} className="p-0">
+                            <div className="p-6 grid grid-cols-2 gap-6 text-sm border-t border-gray-100 shadow-inner">
+                              <div>
+                                <p className="text-gray-500 mb-1">Passenger</p>
+                                <p className="font-medium text-gray-900">{ride.passenger?.name || "N/A"}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500 mb-1">Distance</p>
+                                <p className="font-medium text-gray-900">{ride.distance} km</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500 mb-1">Requested At</p>
+                                <p className="font-medium text-gray-900">{new Date(ride.requestedAt).toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500 mb-1">Completed At</p>
+                                <p className="font-medium text-gray-900">
+                                  {ride.completedAt ? new Date(ride.completedAt).toLocaleString() : "-"}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+              {rides.map((ride) => (
+                <div key={ride._id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="text-xs font-mono text-gray-400">#{ride._id.slice(-6)}</span>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                        ride.status
+                      )}`}
+                    >
+                      {ride.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-start gap-3">
+                      <FiMapPin className="text-green-600 mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-gray-500">Pickup</p>
+                        <p className="text-sm font-medium text-gray-900">{ride.pickup}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <FiNavigation className="text-red-600 mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-gray-500">Dropoff</p>
+                        <p className="text-sm font-medium text-gray-900">{ride.dropoff}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <FiCalendar />
+                      <span>{new Date(ride.requestedAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1 font-medium text-gray-900">
+                      <FiDollarSign className="text-green-600" />
+                      <span>{ride.earnings?.toFixed(2) || "0.00"}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            <div className="mt-6 flex justify-center items-center gap-4">
+              <button
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className={`p-2 rounded-full border transition-colors ${page === 1
+                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-black"
+                  }`}
+              >
+                <FiChevronLeft size={20} />
+              </button>
+              <span className="text-sm font-medium text-gray-600">Page {page}</span>
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={rides.length < 6}
+                className={`p-2 rounded-full border transition-colors ${rides.length < 6
+                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-black"
+                  }`}
+              >
+                <FiChevronRight size={20} />
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       <Footer />

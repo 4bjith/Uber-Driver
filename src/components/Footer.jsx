@@ -8,7 +8,7 @@ const Footer = () => {
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
                 {/* Company Info */}
                 <div>
-                    <h2 className="text-xl font-bold mb-4">Uber<span className="text-green-500">Driver</span></h2>
+                    <h2 className="text-xl font-bold mb-4">Driver@<span className="text-green-500">Voyago</span></h2>
                     <p className="text-gray-400 text-sm">
                         Empowering drivers to earn on their own terms. Join the community and start driving today.
                     </p>
@@ -48,7 +48,7 @@ const Footer = () => {
             </div>
 
             <div className="border-t border-gray-800 mt-8 pt-6 text-center text-gray-500 text-sm">
-                &copy; {new Date().getFullYear()} UberDriver Inc. All rights reserved.
+                &copy; {new Date().getFullYear()} Driver@Voyago Inc. All rights reserved.
             </div>
         </footer>
     );

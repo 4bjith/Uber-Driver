@@ -161,32 +161,49 @@ export default function FinalRide({ socketRef }) {
     : [20.5937, 78.9629];
 
   return (
-    <div className="w-full h-screen relative">
-      <MapContainer
-        center={center}
-        zoom={13}
-        scrollWheelZoom={true}
-        style={{ height: "100%", width: "100%" }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        <FitBounds points={[currentLocation, destination].filter(Boolean)} />
-        {currentLocation && (
-          <Marker position={[currentLocation.lat, currentLocation.lng]} icon={carIcon}>
-            <Popup>Your Current Location</Popup>
-          </Marker>
-        )}
-        {destination && (
-          <Marker position={[destination.lat, destination.lng]}>
-            <Popup>Destination</Popup>
-          </Marker>
-        )}
-        {route.length > 0 && <Polyline positions={route} weight={5} color="blue" />}
-      </MapContainer>
-      <div className="absolute z-999 bottom-8 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded-lg shadow-lg">
-        <button onClick={handleEndRide}>End Ride</button>
+    <div className="w-full h-screen relative flex flex-col bg-gray-100">
+      <div className="absolute inset-0 z-0">
+        <MapContainer
+          center={center}
+          zoom={13}
+          scrollWheelZoom={true}
+          style={{ height: "100%", width: "100%" }}
+          zoomControl={false}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+          <FitBounds points={[currentLocation, destination].filter(Boolean)} />
+          {currentLocation && (
+            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={carIcon}>
+              <Popup>Your Current Location</Popup>
+            </Marker>
+          )}
+          {destination && (
+            <Marker position={[destination.lat, destination.lng]}>
+              <Popup>Destination</Popup>
+            </Marker>
+          )}
+          {route.length > 0 && <Polyline positions={route} weight={4} color="blue" opacity={0.8} />}
+        </MapContainer>
+      </div>
+
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-white rounded-t-3xl shadow-2xl p-6 pb-8">
+        <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-6"></div>
+
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">Heading to Destination</h2>
+          <p className="text-gray-500">Follow the route to the drop-off point.</p>
+        </div>
+
+        <button
+          onClick={handleEndRide}
+          className="w-full py-4 bg-red-600 text-white rounded-xl text-lg font-bold shadow-lg hover:bg-red-700 active:bg-red-800 transition-colors flex items-center justify-center gap-2"
+        >
+          <span>Complete Ride</span>
+          <span>🏁</span>
+        </button>
       </div>
     </div>
   )

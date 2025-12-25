@@ -32,7 +32,7 @@ const TripItem = ({ start, end, duration, requestedAt, status, earnings, complte
       </p>
       <div className="w-[14%] flex items-center justify-center gap-1 text-[0.7rem] sm:text-sm lg:text-base">
         <p>--</p>
-        <p className="px-2 py-0.5 flex justify-center rounded-full bg-blue-200 text-blue-700">
+        <p className="px-2 py-0.5 flex justify-center rounded-full  text-blue-700">
           {duration ? `${duration} Km` : "N/A"}
         </p>
         <p>--</p>

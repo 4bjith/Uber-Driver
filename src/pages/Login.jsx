@@ -1,9 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
-import  { useState } from "react";
-import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import api from "../api/axiosClint";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import usedriverStore from "../Zustand/DriverAuth";
 
 export default function Login() {
@@ -62,149 +61,111 @@ export default function Login() {
   };
 
   return (
-    <div className="w-full h-screen bg-gray-300 flex p-5">
-      {/* Left Side Panel */}
-      <div className="w-full md:w-[60%] h-full p-5 hidden md:flex">
-        <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-xl">
-          {/* Background Image + Blur */}
-          <div
-            className="absolute inset-0 bg-cover bg-center blur-sm scale-110"
-            style={{
-              backgroundImage:
-                'url("https://images7.alphacoders.com/106/1062125.jpg")',
-            }}
-          ></div>
-
-          {/* Semi-transparent overlay for contrast */}
-          <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-
-          {/* Foreground Content */}
-          <div className="relative z-10 flex flex-col justify-center items-center h-full text-center px-10 py-8">
-            <h1 className="text-white text-4xl md:text-5xl font-semibold leading-snug tracking-wide drop-shadow-lg">
-              “In the driver’s seat, you are the captain of your own destiny.
-              <br />
-              Set sail towards your aspirations.”
-            </h1>
-          </div>
+    <div className="w-full h-screen grid md:grid-cols-2 overflow-hidden bg-white text-black font-sans">
+      {/* Left Section: Brand (Hidden on mobile, Black bg) */}
+      <div className="hidden md:flex flex-col justify-between bg-black text-white p-12 lg:p-16 relative">
+        <div className="z-10">
+          <h1 className="text-3xl font-bold tracking-tighter">VOYAGO/DRIVER</h1>
         </div>
+        <div className="z-10 gap-6 flex flex-col">
+          <h2 className="text-5xl lg:text-7xl font-medium tracking-tight leading-[1.1]">
+            Drive when you want,<br />
+            make what you need.
+          </h2>
+          <p className="text-gray-400 text-lg max-w-md">
+            Set your own schedule and earn money on your terms. Join the largest network of active riders.
+          </p>
+        </div>
+        <div className="z-10 text-sm text-gray-500">
+          &copy; 2025 Uber/Voyago Clone. All rights reserved.
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-transparent opacity-40 pointer-events-none" />
       </div>
 
-      {/* Right Side Panel - Login Form */}
-      <div className="w-full md:w-[40%] h-full p-5">
-        <div
-          style={{
-            backgroundImage:
-              'url("https://imagedelivery.net/c2SKP8Bk0ZKw6UDgeeIlbw/7962a78e-2c7f-422d-8795-4f816063b400/public")',
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-          className="w-full h-full bg-opacity-80  backdrop-blur-md rounded-2xl flex justify-center items-center shadow-lg"
-        >
-          <div className="w-[80%] md:w-[70%] h-auto py-8 flex flex-col items-center border-2 rounded-2xl border-gray-200 bg-transparent backdrop-blur-xl bg-opacity-90">
-            {/* Heading */}
-            <h1 className="text-xl font-bold mb-1">Welcome back</h1>
-            <p className="text-sm text-gray-100 mb-6">
-              Please enter your details to sign in.
-            </p>
+      {/* Right Section: Form (White bg) */}
+      <div className="flex flex-col justify-center items-center p-6 sm:p-12 md:p-16 w-full max-w-xl mx-auto md:max-w-none">
+        {/* Mobile Header for context */}
+        <div className="md:hidden w-full mb-8">
+          <h1 className="text-2xl font-bold tracking-tighter">VOYAGO/DRIVER</h1>
+        </div>
 
-            {/* Email Input */}
-            <div className="relative w-full mt-3 px-5">
+        <div className="w-full max-w-sm space-y-8">
+          <div className="text-center md:text-left">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900">Driver Sign in</h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Welcome back! Please enter your details.
+            </p>
+          </div>
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
                 id="email"
                 type="email"
-                placeholder=" "
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                }}
-                className="
-                  peer block w-full px-4 pt-4 pb-2 
-                  border-2 border-gray-300 rounded-md 
-                  text-gray-900 focus:ring-0 focus:border-blue-600 
-                  appearance-none
-                "
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
               />
-              <label
-                htmlFor="email"
-                className="
-                  absolute text-sm text-gray-100 duration-300 
-                  transform -translate-y-4 scale-75 top-1 z-10 
-                  origin-[0] left-8 bottom-[28px] px-2
-                  bg-white
-                  peer-focus:text-gray-800
-                  peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-1/2 peer-placeholder-shown:top-1/2
-                  peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4
-                "
-              >
-                Your Email Address
-              </label>
             </div>
 
-            {/* Password Input */}
-            <div className="relative w-full mt-6 px-5">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder=" "
-                onChange={(e) => setPassword(e.target.value)}
-                className="
-                  peer block w-full px-4 pt-4 pb-2 
-                  border-2 border-gray-300 rounded-md 
-                  text-gray-900 focus:ring-0 focus:border-blue-600 
-                  appearance-none
-                "
-              />
-              <label
-                htmlFor="password"
-                className="
-                  absolute text-sm text-gray-100 duration-300 
-                  transform -translate-y-4 scale-75 top-1 z-10 
-                  origin-[0] left-8 bottom-[28px] px-2
-                  bg-white
-                  peer-focus:text-gray-800
-                  peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-1/2 peer-placeholder-shown:top-1/2
-                  peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4
-                "
-              >
-                Password
-              </label>
-
-              {/* Eye Icon */}
-              <div
-                className="absolute right-7 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <AiOutlineEyeInvisible size={20} />
-                ) : (
-                  <AiOutlineEye size={20} />
-                )}
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                      <path fillRule="evenodd" d="M3.28 2.22a.75.75 0 00-1.06 1.06l14.5 14.5a.75.75 0 101.06-1.06l-1.745-1.745A10.02 10.02 0 0021 12c0-5.523-4.477-10-10-10a10.012 10.012 0 00-4.406 1.025L3.28 2.22zm-2.028 11.23a.75.75 0 111.496-.346C4.018 16.29 7.669 18.5 12 18.5c2.324 0 4.414-.64 6.182-1.76l-1.096-1.096A7.95 7.95 0 0112 17c-4.418 0-8-3.582-8-8 0-.493.064-.972.186-1.432L1.252 13.45z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                      <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
+                      <path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </button>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="w-full h-auto mt-8 flex justify-center items-center">
-              <button
-                onClick={handleSubmit}
-                disabled={SignInMutation.isLoading}
-                className={`px-[40px] py-2 rounded-xl cursor-pointer border-2 text-white font-semibold transition ${
-                  SignInMutation.isLoading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-transparent hover:scale-110"
+            <button
+              type="submit"
+              disabled={SignInMutation.isPending}
+              className={`w-full py-3.5 rounded-lg bg-black text-white font-semibold text-sm transition-all shadow-lg hover:shadow-xl hover:bg-gray-900 active:scale-[0.99] flex items-center justify-center ${SignInMutation.isPending ? "opacity-75 cursor-not-allowed" : ""
                 }`}
-              >
-                {SignInMutation.isLoading ? "Signing in..." : "Sign in"}
-              </button>
-            </div>
-            <p className="text-[0.7rem] mt-[10px] text-gray-50">
-              Don't have an account,{" "}
-              <a
-                href="/register"
-                className="text-black text-[0.7rem] cursor-pointer hover:scale-110 font-semibold"
-              >
-                Sign up for free
-              </a>
-            </p>
-          </div>
+            >
+              {SignInMutation.isPending ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-500">
+            Don't have an account?{" "}
+            <Link to="/register" className="font-semibold text-black hover:underline">
+              Sign up for free
+            </Link>
+          </p>
         </div>
       </div>
     </div>

@@ -1,14 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { CiEdit } from "react-icons/ci";
 import useDriverStore from "../Zustand/DriverAuth";
 import { useQuery } from "@tanstack/react-query";
 import api from "../api/axiosClint";
 import { useNavigate } from "react-router-dom";
 import { MdChangeCircle } from "react-icons/md";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+
 function AccountManager() {
   const token = useDriverStore((state) => state.token);
   const setDriver = useDriverStore((state) => state.setDriver);
   const Navigate = useNavigate();
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["driver"],
     queryFn: async () => {
@@ -20,10 +24,20 @@ function AccountManager() {
     retry: false,
     enabled: !!token,
   });
+
+  // Calculate driverInfo dynamically based on data structure
+  // Handles cases where data is { status: 'success', driver: {...} } or just the driver object
+  const driverInfo = data?.driver || data;
+
+  useEffect(() => {
+    if (driverInfo) {
+      setDriver(driverInfo);
+    }
+  }, [driverInfo, setDriver]);
+
   console.log("Driver data is :", data);
-  if (data?.driver) {
-    setDriver(data.driver);
-  }
+  console.log("Resolved driver info:", driverInfo);
+
   if (isLoading) return <h1>Loading...</h1>;
   if (isError)
     return (
@@ -33,9 +47,10 @@ function AccountManager() {
     );
 
   return (
-    <div className="w-full h-full bg-gray-50 min-h-[90vh] p-5">
+    <div className="w-full h-full bg-gray-50 min-h-[90vh] ">
+      <Navbar />
       {/* Header */}
-      <div className="w-full flex items-center">
+      <div className="w-full flex items-center p-5">
         <h1 className="text-green-800 w-1/5 md:w-1/6 font-bold text-[1.1rem]">
           My Profile
         </h1>
@@ -45,30 +60,32 @@ function AccountManager() {
       {/* Profile section */}
       <div className="w-full h-auto p-5 bg-white shadow-lg rounded-xl mt-5 flex ">
         {/* Profile image */}
-        {/* Profile image */}
         <div className="w-2/5 md:w-1/5 flex justify-center items-center relative ">
           <div className="w-[150px] h-[150px] rounded-full p-[5px] bg-green-700 overflow-hidden relative">
-            {!data?.driver.profileImg ? (
-          <img
-            src="https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png"
-            alt="Profile"
-            className="rounded-full w-20 h-20 object-cover"
-          />
-        ) : (
-          <img
-            src={
-              data?.driver.profileImg?.startsWith("http")
-                ? data?.driver.profileImg
-                : `${
-                     "http://localhost:8080"
-                  }${data?.driver.profileImg}`
-            }
-            alt="Profile"
-            className="align-middle overflow-hidden rounded-full w-full h-full"
-          />
-        )}
+            {!driverInfo?.profileImg ? (
+              <img
+                src="https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png"
+                alt="Profile"
+                className="rounded-full w-20 h-20 object-cover"
+              />
+            ) : (
+              <img
+                src={
+                  driverInfo?.profileImg?.startsWith("http")
+                    ? driverInfo?.profileImg
+                    : `http://localhost:8080${driverInfo.profileImg}`
+                }
+                alt="Profile"
+                className="align-middle overflow-hidden rounded-full w-full h-full"
+              />
+            )}
           </div>
-          <div onClick={()=>{Navigate("/update/prfileImage")}} className="absolute bottom-2  right-5 bg-white rounded-full p-1 shadow-md cursor-pointer hover:scale-110 transition-transform">
+          <div
+            onClick={() => {
+              Navigate("/update/prfileImage");
+            }}
+            className="absolute bottom-2  right-5 bg-white rounded-full p-1 shadow-md cursor-pointer hover:scale-110 transition-transform"
+          >
             <MdChangeCircle className="text-green-700 text-3xl" />
           </div>
         </div>
@@ -77,15 +94,15 @@ function AccountManager() {
         <div className="flex flex-col justify-center p-5">
           {/* profile details here */}
           <h1 className="text-[1rem] text-green-800 font-semibold ">
-            {data.driver?.name}
+            {driverInfo?.name}
           </h1>
           <p className="text-[0.9rem]">Driver</p>
-          <p className="text-[0.9rem] text-blue-500">{data.driver?.email}</p>
+          <p className="text-[0.9rem] text-blue-500">{driverInfo?.email}</p>
         </div>
       </div>
 
       {/* Personla information */}
-      <div className="w-[100%] h-auto p-5 bg-white shadow-lg rounded-xl mt-5 ">
+      <div className="w-[100%] h-[25vh] p-5 bg-white shadow-lg rounded-xl mt-5 ">
         <div className="w-full h-auto mb-5 flex justify-between">
           <h1 className="text-green-800 font-bold text-[1.1rem]">
             Personal Information
@@ -105,23 +122,23 @@ function AccountManager() {
         <div className="w-full h-auto flex flex-col gap-3 md:flex-row md:flex-wrap">
           <div className="w-[100%] md:w-[30%] h-auto flex md:flex-col justify-between px-2">
             <h2 className="text-[0.9rem] text-gray-500">Full Name</h2>
-            <h2 className="text-[0.9rem] text-gray-950">{data.driver?.name}</h2>
+            <h2 className="text-[0.9rem] text-gray-950">{driverInfo?.name}</h2>
           </div>
           <div className="w-[100%] md:w-[30%] h-auto flex md:flex-col justify-between px-2">
             <h2 className="text-[0.9rem] text-gray-500">Email Address</h2>
             <h2 className="text-[0.9rem] text-gray-950">
-              {data.driver?.email}
+              {driverInfo?.email}
             </h2>
           </div>
           <div className="w-[100%] md:w-[30%] h-auto flex md:flex-col justify-between px-2">
             <h2 className="text-[0.9rem] text-gray-500">Mobile No.</h2>
             <h2 className="text-[0.9rem] text-gray-950">
-              +91 {data.driver?.mobile}
+              +91 {driverInfo?.mobile}
             </h2>
           </div>
         </div>
       </div>
-      <div className="w-[100%] h-auto p-5 bg-white shadow-lg rounded-xl mt-5 ">
+      <div className="w-[100%] h-[25vh] p-5 bg-white shadow-lg rounded-xl mt-5 ">
         <div className="w-full h-auto mb-5 flex justify-between">
           <h1 className="text-green-800 font-bold text-[1.1rem]">
             Vehicle Information
@@ -142,23 +159,24 @@ function AccountManager() {
           <div className="w-[100%] md:w-[30%] h-auto flex md:flex-col justify-between px-2">
             <h2 className="text-[0.9rem] text-gray-500">Vehicle Model</h2>
             <h2 className="text-[0.9rem] text-gray-950">
-              {data.driver?.vehicleName}
+              {driverInfo?.vehicleName}
             </h2>
           </div>
           <div className="w-[100%] md:w-[30%] h-auto flex md:flex-col justify-between px-2">
             <h2 className="text-[0.9rem] text-gray-500">Vehicle No.</h2>
             <h2 className="text-[0.9rem] text-gray-950">
-              {data.driver?.vehicle}
+              {driverInfo?.vehicle}
             </h2>
           </div>
           <div className="w-[100%] md:w-[30%] h-auto flex md:flex-col justify-between px-2">
             <h2 className="text-[0.9rem] text-gray-500">Driving Licence</h2>
             <h2 className="text-[0.9rem] text-gray-950">
-              {data.driver?.licence}
+              {driverInfo?.licence}
             </h2>
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

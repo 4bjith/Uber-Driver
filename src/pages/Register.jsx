@@ -1,7 +1,8 @@
-import  { useState } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import api from "../api/axiosClint";
+import { Link } from "react-router-dom";
 
 function Register() {
   const [name, setName] = useState("");
@@ -57,124 +58,146 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
-      <div
-        className="relative w-full max-w-md md:max-w-xl h-[700px] bg-cover bg-center rounded-3xl shadow-2xl overflow-hidden"
-        style={{
-          backgroundImage:
-            'url("https://w0.peakpx.com/wallpaper/481/11/HD-wallpaper-jade-on-purple-aesthetic-in-2022-jdm-best-jdm-cars-car.jpg")',
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="absolute inset-0 bg-transparent bg-opacity-50 backdrop-blur-xl flex justify-center items-center px-6">
-          <div className="w-full">
-            <div className="bg-transparent bg-opacity-10 rounded-2xl border border-white border-opacity-30 px-6 py-8 shadow-md">
-              <h2 className="text-white text-3xl font-bold text-center mb-2">
-                Sign Up
-              </h2>
-              <p className="text-white text-center text-sm mb-6">
-                Join us and start your journey!
-              </p>
+    <div className="w-full h-screen grid md:grid-cols-2 overflow-hidden bg-white text-black font-sans">
+      {/* Left Section: Brand (Hidden on mobile, Black bg) */}
+      <div className="hidden md:flex flex-col justify-between bg-black text-white p-12 lg:p-16 relative">
+        <div className="z-10">
+          <h1 className="text-3xl font-bold tracking-tighter">VOYAGO/DRIVER</h1>
+        </div>
+        <div className="z-10 gap-6 flex flex-col">
+          <h2 className="text-5xl lg:text-7xl font-medium tracking-tight leading-[1.1]">
+            Partner with<br />
+            Voyago.
+          </h2>
+          <p className="text-gray-400 text-lg max-w-md">
+            Join thousands of other drivers who are earning on their own terms.
+          </p>
+        </div>
+        <div className="z-10 text-sm text-gray-500">
+          &copy; 2025 Uber/Voyago Clone. All rights reserved.
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-gray-900 to-transparent opacity-40 pointer-events-none" />
+      </div>
 
-              {/* Form Starts Here */}
-              <form className="space-y-5" onSubmit={handleSubmit}>
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Full Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg bg-transparent border border-white border-opacity-30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-purple-300"
-                  />
-                </div>
+      {/* Right Section: Form (White bg) */}
+      <div className="flex flex-col items-center p-6 sm:p-12 md:p-16 w-full overflow-y-auto">
+        {/* Mobile Header for context */}
+        <div className="md:hidden w-full mb-8">
+          <h1 className="text-2xl font-bold tracking-tighter">VOYAGO/DRIVER</h1>
+        </div>
 
-                <div>
-                  <input
-                    type="email"
-                    placeholder="Email Address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg bg-transparent border border-white border-opacity-30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-purple-300"
-                  />
-                </div>
-
-                <div>
-                  <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg bg-transparent border border-white border-opacity-30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-purple-300"
-                  />
-                </div>
-
-                <div>
-                  <input
-                    type="tel"
-                    placeholder="Mobile No."
-                    value={mobile}
-                    onChange={(e) => setMobile(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg bg-transparent border border-white border-opacity-30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-purple-300"
-                  />
-                </div>
-
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Vehicle Name"
-                    value={vehicleName}
-                    onChange={(e) => setVehicleName(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg bg-transparent border border-white border-opacity-30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-purple-300"
-                  />
-                </div>
-
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Vehicle Number"
-                    value={vehicle}
-                    onChange={(e) => setVehicle(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg bg-transparent border border-white border-opacity-30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-purple-300"
-                  />
-                </div>
-
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Driving License Number"
-                    value={licence}
-                    onChange={(e) => setLicence(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg bg-transparent border border-white border-opacity-30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-purple-300"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={SignUpMutation.isPending}
-                  className={`w-full text-white font-semibold py-2 rounded-lg transition duration-200 border border-white border-opacity-30 ${
-                    SignUpMutation.isPending
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-opacity-40"
-                  }`}
-                >
-                  {SignUpMutation.isPending
-                    ? "Creating Account..."
-                    : "Create Account"}
-                </button>
-              </form>
-
-              <p className="text-white text-sm mt-6 text-center">
-                Already have an account?{" "}
-                <a
-                  href="/login"
-                  className="text-purple-200 underline hover:text-purple-100"
-                >
-                  Sign in here
-                </a>
-              </p>
-            </div>
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center md:text-left">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900">Become a Driver</h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Sign up today and start earning.
+            </p>
           </div>
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <input
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+              <input
+                type="tel"
+                placeholder="+1 555 000 0000"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Name</label>
+                <input
+                  type="text"
+                  placeholder="Toyota Camry"
+                  value={vehicleName}
+                  onChange={(e) => setVehicleName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Number</label>
+                <input
+                  type="text"
+                  placeholder="ABC-1234"
+                  value={vehicle}
+                  onChange={(e) => setVehicle(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Driving License Number</label>
+              <input
+                type="text"
+                placeholder="DL-1234567890"
+                value={licence}
+                onChange={(e) => setLicence(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={SignUpMutation.isPending}
+              className={`w-full py-3.5 rounded-lg bg-black text-white font-semibold text-sm transition-all shadow-lg hover:shadow-xl hover:bg-gray-900 active:scale-[0.99] flex items-center justify-center ${SignUpMutation.isPending
+                  ? "opacity-75 cursor-not-allowed"
+                  : ""
+                }`}
+            >
+              {SignUpMutation.isPending
+                ? "Creating Account..."
+                : "Create Account"}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-500">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-black font-semibold hover:underline"
+            >
+              Sign in here
+            </Link>
+          </p>
         </div>
       </div>
     </div>

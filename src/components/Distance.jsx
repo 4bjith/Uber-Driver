@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { MdOutlineSpeed } from "react-icons/md";
 
-const DistanceDrivenCard = () => {
+const DistanceDrivenCard = ({rides}) => {
   const bars = [
     { month: "Dec", height: "45%", color: "bg-blue-500" },
     { month: "Jan", height: "60%", color: "bg-blue-400" },
@@ -9,7 +9,17 @@ const DistanceDrivenCard = () => {
     { month: "Mar", height: "75%", color: "bg-green-400" },
     { month: "Apr", height: "55%", color: "bg-blue-200" },
   ];
+  const [distance, setDistance] = useState(0)
+ // 📌 Calculate total completed ride distance
+   useEffect(() => {
+    if (!rides || rides.length === 0) return;
 
+    const total = rides
+      .filter((r) => r.status === "completed")
+      .reduce((sum, r) => sum + Number(r.distance || 0), 0);
+
+    setDistance(total.toFixed(2));
+  }, [rides]);
   return (
     <div className="w-full  h-[150px] md:h-[160px] bg-white rounded-2xl shadow-sm p-4 flex flex-col justify-between">
       {/* Header */}
@@ -23,7 +33,7 @@ const DistanceDrivenCard = () => {
       {/* Stats and Chart */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-3xl font-semibold text-gray-800">1628</h2>
+          <h2 className="text-3xl font-semibold text-gray-800">{distance}</h2>
           <span className="text-xs text-gray-400 ml-1">km</span>
         </div>
 
