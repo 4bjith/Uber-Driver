@@ -12,6 +12,7 @@ function Register() {
   const [vehicle, setVehicle] = useState("");
   const [licence, setLicence] = useState("");
   const [vehicleName, setVehicleName] = useState("");
+  const [vehicleType, setVehicleType] = useState("Sedan");
 
   // Mutation function for registration
   const SignUpMutation = useMutation({
@@ -51,6 +52,7 @@ function Register() {
       mobile,
       vehicleName,
       vehicle,
+      vehicleType,
       licence,
     };
 
@@ -162,6 +164,19 @@ function Register() {
                   className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
+              <select
+                value={vehicleType}
+                onChange={(e) => setVehicleType(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+              >
+                <option value="Sedan">Sedan (Voyago Go)</option>
+                <option value="SUV">SUV (Voyago Max)</option>
+                <option value="Bike">Bike (Voyago Moto)</option>
+              </select>
             </div>
 
             <div>

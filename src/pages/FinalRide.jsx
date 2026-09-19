@@ -60,13 +60,16 @@ const calculateDistance = (coord1, coord2) => {
   return (R * c).toFixed(2);
 };
 
+import useDriverStore from "../Zustand/DriverAuth";
+
 export default function FinalRide({ socketRef }) {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [destination, setDestination] = useState(null);
   const [route, setRoute] = useState([]);
   const location = useLocation();
   const rideId = new URLSearchParams(location.search).get("id");
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const token = useDriverStore((state) => state.token);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -83,12 +86,18 @@ export default function FinalRide({ socketRef }) {
     if (!currentLocation || !destination) return;
 
     try {
-      const apiKey =
-        "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImM2OTg1ZDk4ZjVkNTQxMWU5OTAzZjVmMGNjMjZlYWIxIiwiaCI6Im11cm11cjY0In0=";
-      const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${currentLocation.lng},${currentLocation.lat}&end=${destination.lng},${destination.lat}&geometries=geojson`;
-
-      const res = await fetch(url);
-      const data = await res.json();
+      const res = await api.get(`/ride/route`, {
+        params: {
+          startLng: currentLocation.lng,
+          startLat: currentLocation.lat,
+          endLng: destination.lng,
+          endLat: destination.lat
+        },
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = res.data;
 
       if (!data.features) return;
 
@@ -114,6 +123,9 @@ export default function FinalRide({ socketRef }) {
     queryFn: async () => {
       const res = await api.get("/ride/info", {
         params: { rideId },
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
       return res.data.data; // { message, data: ride }
     },
@@ -140,7 +152,11 @@ export default function FinalRide({ socketRef }) {
     toast.success(`Ride Ended! Total Distance: ${distance} km`);
 
     try {
-      const { data } = await api.put("/ride/end", { rideId });
+      const { data } = await api.put("/ride/end", { rideId }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       console.log(data);
       if (data) {
         toast.info("You have reached your destination!");

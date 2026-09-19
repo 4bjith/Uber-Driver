@@ -53,7 +53,11 @@ function FitBounds({ points }) {
   return null;
 }
 
-export default function DriverCurrentRide({ socketRef, driverEmail }) {
+export default function DriverCurrentRide({ socketRef }) {
+  const driver = useDriverStore((state) => state.driver);
+  const token = useDriverStore((state) => state.token);
+  const driverEmail = driver?.email;
+
   const [driverLocation, setDriverLocation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [route, setRoute] = useState([]);
@@ -62,7 +66,6 @@ export default function DriverCurrentRide({ socketRef, driverEmail }) {
   const rideId = new URLSearchParams(location.search).get("id");
   const otp = useRef();
   const navigate = useNavigate();
-  const socket = useDriverStore((state) => state.socket)
 
   // Driver GPS
   useEffect(() => {
@@ -90,36 +93,41 @@ export default function DriverCurrentRide({ socketRef, driverEmail }) {
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+  }, [driverEmail, socketRef]);
 
-  // Receive user location
+  // Receive user location (with cleanup)
   useEffect(() => {
-    if (!socketRef.current || !socket) return;
+    const socketInstance = socketRef.current;
+    if (!socketInstance) return;
 
-    if (socketRef.current) {
-      socketRef.current.on("user:location", (data) => {
-        if (!data) return;
-        setUserLocation({ lat: data.lat, lng: data.lng });
-      });
-    } else {
-      socket.on("user:location", (data) => {
-        if (!data) return;
-        setUserLocation({ lat: data.lat, lng: data.lng });
-      });
-    }
-  }, []);
+    const handleUserLocation = (data) => {
+      if (!data) return;
+      setUserLocation({ lat: data.lat, lng: data.lng });
+    };
+
+    socketInstance.on("user:location", handleUserLocation);
+    return () => {
+      socketInstance.off("user:location", handleUserLocation);
+    };
+  }, [socketRef]);
 
   // Route drawing
   const getRoute = async () => {
     if (!driverLocation || !userLocation) return;
 
     try {
-      const apiKey =
-        "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImM2OTg1ZDk4ZjVkNTQxMWU5OTAzZjVmMGNjMjZlYWIxIiwiaCI6Im11cm11cjY0In0=";
-      const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${driverLocation.lng},${driverLocation.lat}&end=${userLocation.lng},${userLocation.lat}&geometries=geojson`;
-
-      const res = await fetch(url);
-      const data = await res.json();
+      const res = await api.get(`/ride/route`, {
+        params: {
+          startLng: driverLocation.lng,
+          startLat: driverLocation.lat,
+          endLng: userLocation.lng,
+          endLat: userLocation.lat
+        },
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = res.data;
 
       if (!data.features) return;
 
@@ -149,11 +157,31 @@ export default function DriverCurrentRide({ socketRef, driverEmail }) {
     queryFn: async () => {
       const res = await api.get("/ride/info", {
         params: { rideId },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       return res.data.data; // { message, data: ride }
     },
     enabled: !!rideId,
   });
+
+  // Restore passenger location from database on reload/mount if socket hasn't emitted yet
+  useEffect(() => {
+    if (rideInfo?.pickupCoordinates?.coordinates && !userLocation) {
+      const [lng, lat] = rideInfo.pickupCoordinates.coordinates;
+      if (lng && lat) {
+        setUserLocation({ lat, lng });
+      }
+    }
+  }, [rideInfo, userLocation]);
+
+  // Redirect to final ride page if ride is already in progress in DB
+  useEffect(() => {
+    if (rideInfo?.status === "in_progress") {
+      navigate(`/finalride?id=${rideId}`);
+    }
+  }, [rideInfo, rideId, navigate]);
 
   // Log populated data
   console.log("Ride Info:", rideInfo);

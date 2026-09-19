@@ -40,13 +40,60 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
     }
   }, [data]);
 
+  const { data: driverProfile, refetch: refetchDriver } = useQuery({
+    queryKey: ["driverProfile", token],
+    queryFn: async () => {
+      if (!token) return null;
+      try {
+        const res = await api.get("/driver", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return res.data?.driver;
+      } catch (err) {
+        console.error("Error fetching driver profile", err);
+        return null;
+      }
+    },
+    enabled: !!token,
+  });
+
+  const { data: activeRide } = useQuery({
+    queryKey: ["driverActiveRide", token],
+    queryFn: async () => {
+      if (!token) return null;
+      try {
+        const res = await api.get("/ride/active", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data?.data;
+      } catch (err) {
+        console.error("Error fetching active ride", err);
+        return null;
+      }
+    },
+    enabled: !!token,
+  });
+
+  useEffect(() => {
+    if (activeRide) {
+      if (activeRide.status === "accepted") {
+        navigate(`/currentride?id=${activeRide._id}`);
+      } else if (activeRide.status === "in_progress") {
+        navigate(`/finalride?id=${activeRide._id}`);
+      }
+    }
+  }, [activeRide, navigate]);
+
 
   const handleSubmit = async () => {
     localStorage.setItem("rideId", Msg.rideId)
     try {
       await api.post("/driver/acceptride", {
         rideId: Msg.rideId,
-        driverEmail: email,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
       toast.success("Ride accepted");
       setIsMsg(null);
@@ -54,6 +101,27 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
     } catch (err) {
       console.error("Failed to accept ride", err);
       toast.error("Failed to accept ride");
+    }
+  };
+
+  const handleDecline = async () => {
+    if (!Msg?.rideId) {
+      setIsMsg(null);
+      return;
+    }
+    try {
+      await api.put("/ride/cancel", {
+        rideId: Msg.rideId,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      toast.info("Ride declined");
+    } catch (err) {
+      console.error("Failed to decline ride", err);
+    } finally {
+      setIsMsg(null);
     }
   };
 
@@ -103,7 +171,7 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
 
             <div className="bg-gray-50 p-6 flex gap-4 border-t border-gray-100">
               <button
-                onClick={() => setIsMsg(null)}
+                onClick={handleDecline}
                 className="flex-1 py-3.5 bg-white text-gray-700 border border-gray-300 rounded-xl font-bold hover:bg-gray-50 transition-colors active:scale-95"
               >
                 Decline
@@ -132,7 +200,22 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+                {driverProfile?.kycStatus === "verified" ? (
+                  <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full border border-green-200">
+                    KYC Verified ✓
+                  </span>
+                ) : driverProfile?.kycStatus === "rejected" ? (
+                  <span className="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full border border-red-200">
+                    KYC Rejected ✕
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full border border-amber-200 animate-pulse">
+                    KYC Pending Approval ⏳
+                  </span>
+                )}
+              </div>
               <p className="text-gray-500 mt-1">Welcome back, get ready for your trips.</p>
             </div>
 
@@ -141,6 +224,19 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
               <BsArrowUpRightCircle />
             </button>
           </div>
+
+          {/* KYC Notification Alert if not verified */}
+          {driverProfile && driverProfile.kycStatus !== "verified" && (
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl shadow-sm flex items-start gap-3">
+              <div className="text-amber-600 text-xl font-bold">⚠️</div>
+              <div>
+                <h4 className="font-bold text-amber-900 text-sm">Account Verification In Progress</h4>
+                <p className="text-amber-800 text-xs mt-0.5">
+                  Your driver documents and license ({driverProfile.licence}) are under administrative review. You will be able to receive incoming ride requests once your account is verified.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Stats Cards Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
