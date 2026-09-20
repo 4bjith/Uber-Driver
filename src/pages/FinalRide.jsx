@@ -11,7 +11,7 @@ import "leaflet/dist/leaflet.css";
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "react-toastify";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../api/axiosClient";
 import useDriverStore from "../Zustand/DriverAuth";
 import { useTheme } from "../context/ThemeContext";
@@ -22,7 +22,9 @@ import {
   RiShieldCheckLine, 
   RiWallet3Line, 
   RiArrowLeftLine,
-  RiCheckDoubleLine
+  RiCheckDoubleLine,
+  RiDeleteBinLine,
+  RiAlertLine
 } from "react-icons/ri";
 
 const createDriverIcon = (isDark) =>
@@ -85,34 +87,21 @@ function FitBounds({ points }) {
   return null;
 }
 
-// Distance calc (Haversine formula in km)
-const calculateDistance = (coord1, coord2) => {
-  if (!coord1 || !coord2) return 0;
-  const toRad = (deg) => (deg * Math.PI) / 180;
-  const R = 6371;
-  const dLat = toRad(coord2.lat - coord1.lat);
-  const dLng = toRad(coord2.lng - coord1.lng);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(coord1.lat)) *
-      Math.cos(toRad(coord2.lat)) *
-      Math.sin(dLng / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Number((R * c).toFixed(2));
-};
-
 export default function FinalRide({ socketRef }) {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [destination, setDestination] = useState(null);
   const [route, setRoute] = useState([]);
   const [isPaid, setIsPaid] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const location = useLocation();
   const rideId = new URLSearchParams(location.search).get("id") || localStorage.getItem("rideId");
   const navigate = useNavigate();
   const token = useDriverStore((state) => state.token);
   const driver = useDriverStore((state) => state.driver);
+  const queryClient = useQueryClient();
 
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -146,11 +135,19 @@ export default function FinalRide({ socketRef }) {
     queryKey: ["rideinfo", rideId],
     queryFn: async () => {
       if (!rideId || !token) return null;
-      const res = await api.get("/ride/info", {
-        params: { rideId },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      return res.data?.data;
+      try {
+        const res = await api.get("/ride/info", {
+          params: { rideId },
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return res.data?.data;
+      } catch (err) {
+        if (err.response?.status === 404) {
+          localStorage.removeItem("rideId");
+          return null;
+        }
+        throw err;
+      }
     },
     enabled: !!rideId && !!token,
     refetchInterval: 5000,
@@ -224,7 +221,7 @@ export default function FinalRide({ socketRef }) {
   const handleEndRide = async () => {
     setIsEnding(true);
     try {
-      const { data } = await api.put(
+      await api.put(
         "/ride/end",
         { rideId },
         {
@@ -234,12 +231,42 @@ export default function FinalRide({ socketRef }) {
 
       toast.success("🏁 Ride completed successfully! Payout credited.");
       localStorage.removeItem("rideId");
+      queryClient.invalidateQueries({ queryKey: ["driverActiveRide"] });
       navigate("/dashboard");
     } catch (err) {
       console.error("Failed to end ride:", err);
       toast.error(err.response?.data?.message || "Failed to complete ride");
     } finally {
       setIsEnding(false);
+    }
+  };
+
+  const handleCancelRide = async () => {
+    if (!rideId) {
+      localStorage.removeItem("rideId");
+      navigate("/dashboard");
+      return;
+    }
+
+    setIsCancelling(true);
+    try {
+      await api.put(
+        "/ride/cancel",
+        { rideId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Ride cancelled. Returning to Command Center.");
+      localStorage.removeItem("rideId");
+      queryClient.invalidateQueries({ queryKey: ["driverActiveRide"] });
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Error cancelling ride:", err);
+      toast.error(err.response?.data?.message || "Failed to cancel ride");
+    } finally {
+      setIsCancelling(false);
+      setIsCancelModalOpen(false);
     }
   };
 
@@ -258,12 +285,25 @@ export default function FinalRide({ socketRef }) {
     <div className="w-full h-screen relative flex flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-950 font-sans">
       {/* Top Floating Control Bar */}
       <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="pointer-events-auto p-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-lg text-zinc-900 dark:text-white hover:scale-105 active:scale-95 transition-all"
-        >
-          <RiArrowLeftLine size={20} />
-        </button>
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <button
+            onClick={() => navigate("/dashboard")}
+            title="Return to Dashboard"
+            className="p-3 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-lg text-zinc-900 dark:text-white hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-bold"
+          >
+            <RiArrowLeftLine size={18} />
+            <span className="hidden sm:inline">Dashboard</span>
+          </button>
+
+          <button
+            onClick={() => setIsCancelModalOpen(true)}
+            title="Emergency Cancel Ride"
+            className="p-3 bg-red-600/90 hover:bg-red-700 text-white backdrop-blur-md rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-bold"
+          >
+            <RiDeleteBinLine size={16} />
+            <span className="hidden sm:inline">Cancel Ride</span>
+          </button>
+        </div>
 
         <div className="pointer-events-auto bg-zinc-950/90 dark:bg-white/90 backdrop-blur-md text-white dark:text-zinc-950 px-4 py-2 rounded-2xl text-xs font-bold shadow-lg flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
@@ -271,8 +311,8 @@ export default function FinalRide({ socketRef }) {
         </div>
       </div>
 
-      {/* Fullscreen Map */}
-      <div className="absolute inset-0 z-0">
+      {/* Fullscreen Map with Clean OpenStreetMap Tiles */}
+      <div className={`absolute inset-0 z-0 ${isDark ? "map-dark-filter" : ""}`}>
         <MapContainer
           center={center}
           zoom={14}
@@ -280,12 +320,9 @@ export default function FinalRide({ socketRef }) {
           style={{ height: "100%", width: "100%" }}
         >
           <TileLayer
-            url={
-              isDark
-                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            }
-            attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            maxZoom={19}
           />
           <FitBounds points={[currentLocation, destination].filter(Boolean)} />
 
@@ -314,7 +351,6 @@ export default function FinalRide({ socketRef }) {
 
       {/* Floating Bottom Card: Ride Transit & Complete Action */}
       <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-8 md:bottom-8 md:w-[420px] z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-zinc-200/80 dark:border-zinc-800 animate-in slide-in-from-bottom-6 duration-300">
-        {/* Grab bar */}
         <div className="w-10 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full mx-auto mb-4" />
 
         {/* Destination Header */}
@@ -365,15 +401,62 @@ export default function FinalRide({ socketRef }) {
         </div>
 
         {/* Complete Ride Trigger */}
-        <button
-          onClick={handleEndRide}
-          disabled={isEnding}
-          className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold text-sm shadow-xl active:scale-98 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          <RiFlagLine size={18} />
-          <span>{isEnding ? "Concluding Ride..." : "Arrived at Destination • Complete Ride"}</span>
-        </button>
+        <div className="space-y-2.5">
+          <button
+            onClick={handleEndRide}
+            disabled={isEnding}
+            className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold text-sm shadow-xl active:scale-98 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <RiFlagLine size={18} />
+            <span>{isEnding ? "Concluding Ride..." : "Arrived at Destination • Complete Ride"}</span>
+          </button>
+
+          <button
+            onClick={() => setIsCancelModalOpen(true)}
+            className="w-full py-2 text-xs font-semibold text-zinc-500 hover:text-red-500 text-center transition-colors"
+          >
+            Cancel / Abort Ride
+          </button>
+        </div>
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      {isCancelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
+            <div className="text-center mb-5">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-950/50 text-red-600 rounded-2xl mx-auto flex items-center justify-center mb-3">
+                <RiAlertLine size={24} />
+              </div>
+              <h3 className="text-lg font-bold text-zinc-950 dark:text-white font-['Space_Grotesk']">
+                Abort Active Ride?
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                Are you sure you want to cancel this ride? This will reset your active trip status and return to the Command Center.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setIsCancelModalOpen(false)}
+                className="flex-1 py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl font-bold text-xs"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelRide}
+                disabled={isCancelling}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              >
+                <RiDeleteBinLine size={16} />
+                <span>{isCancelling ? "Aborting..." : "Confirm Abort"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

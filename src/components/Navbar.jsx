@@ -237,11 +237,36 @@ export default function Navbar() {
                     <span>Vehicle & Profile</span>
                   </Link>
 
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      localStorage.removeItem("rideId");
+                      const activeRideId = localStorage.getItem("rideId");
+                      if (activeRideId) {
+                        try {
+                          await api.put("/ride/cancel", { rideId: activeRideId }, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                        } catch (e) {}
+                      }
+                      localStorage.removeItem("rideId");
+                      toast.success("Active ride cache cleared!");
+                      setDropdownOpen(false);
+                      navigate("/dashboard");
+                      window.location.reload();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors text-left"
+                  >
+                    <FiClock />
+                    <span>Clear Ride Cache</span>
+                  </button>
+
                   <div className="border-t border-neutral-100 dark:border-zinc-900 my-1"></div>
 
                   <button
                     type="button"
                     onClick={() => {
+                      localStorage.removeItem("rideId");
                       logout();
                       setDropdownOpen(false);
                       toast.success("Signed out successfully");
@@ -252,6 +277,7 @@ export default function Navbar() {
                     <FiLogOut />
                     <span>Sign Out</span>
                   </button>
+
                 </div>
               )}
             </div>

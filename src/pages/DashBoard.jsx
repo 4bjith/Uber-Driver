@@ -11,25 +11,28 @@ import useDriverStore from "../Zustand/DriverAuth";
 import { toast } from "react-toastify";
 import api from "../api/axiosClient";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   RiArrowRightUpLine, 
   RiShieldCheckLine, 
   RiAlertLine, 
-  RiFlashlightLine, 
   RiCarLine, 
   RiCloseLine, 
   RiCheckLine,
   RiWallet3Line,
-  RiTimeLine
+  RiNavigationFill,
+  RiCompass3Line,
+  RiDeleteBinLine
 } from "react-icons/ri";
 
 function DashBoard({ socketRef, Msg, setIsMsg }) {
   const token = useDriverStore((state) => state.token);
   const driver = useDriverStore((state) => state.driver);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [rides, setRides] = useState([]);
   const [countdown, setCountdown] = useState(15);
+  const [isCancellingActive, setIsCancellingActive] = useState(false);
 
   // Fetch driver ride history for stats
   const { data: rideData } = useQuery({
@@ -68,8 +71,8 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
     enabled: !!token,
   });
 
-  // Check for active ride
-  const { data: activeRide } = useQuery({
+  // Check for active ride (poll every 4s)
+  const { data: activeRide, refetch: refetchActiveRide } = useQuery({
     queryKey: ["driverActiveRide", token],
     queryFn: async () => {
       if (!token) return null;
@@ -83,18 +86,32 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
       }
     },
     enabled: !!token,
-    refetchInterval: 5000,
+    refetchInterval: 4000,
   });
 
-  useEffect(() => {
-    if (activeRide) {
-      if (activeRide.status === "accepted") {
-        navigate(`/currentride?id=${activeRide._id}`);
-      } else if (activeRide.status === "in_progress") {
-        navigate(`/finalride?id=${activeRide._id}`);
-      }
+  // Cancel or reset stuck active ride from dashboard
+  const handleCancelActiveRide = async (rideIdToCancel) => {
+    if (!rideIdToCancel) return;
+    setIsCancellingActive(true);
+    try {
+      await api.put(
+        "/ride/cancel",
+        { rideId: rideIdToCancel },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Active ride cancelled/reset successfully");
+      localStorage.removeItem("rideId");
+      queryClient.invalidateQueries({ queryKey: ["driverActiveRide"] });
+      refetchActiveRide();
+    } catch (err) {
+      console.error("Error cancelling ride:", err);
+      toast.error(err.response?.data?.message || "Failed to cancel ride");
+    } finally {
+      setIsCancellingActive(false);
     }
-  }, [activeRide, navigate]);
+  };
 
   // Countdown timer for incoming ride alert
   useEffect(() => {
@@ -214,7 +231,6 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
                   </div>
                 </div>
 
-                {/* Circular timer badge */}
                 <div className="w-10 h-10 rounded-full border-2 border-zinc-950 dark:border-white flex items-center justify-center font-mono font-bold text-xs">
                   {countdown}s
                 </div>
@@ -236,7 +252,7 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                     Cashfree Escrow
                   </span>
-                  <p className="text-[11px] text-zinc-400 mt-1">Instant Bank Settlement</p>
+                  <p className="text-[11px] text-zinc-400 mt-1">Instant Settlement</p>
                 </div>
               </div>
 
@@ -292,6 +308,55 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
         <Navbar />
 
         <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6 pb-20">
+          {/* Active Ride Banner (Visible if driver has an accepted or in-progress ride) */}
+          {activeRide && (
+            <div className="bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 p-4 sm:p-5 rounded-2xl shadow-xl border border-zinc-800 dark:border-zinc-200 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in slide-in-from-top-3">
+              <div className="flex items-start sm:items-center gap-3">
+                <div className="p-3 bg-white/10 dark:bg-black/10 rounded-xl text-emerald-400 dark:text-emerald-600 shrink-0">
+                  <RiNavigationFill size={22} className="animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs uppercase font-extrabold tracking-wider bg-emerald-500/20 text-emerald-400 dark:text-emerald-600 px-2 py-0.5 rounded-full font-mono">
+                      {activeRide.status === "accepted" ? "En Route to Pickup" : "Trip In Progress"}
+                    </span>
+                    <span className="text-xs font-mono text-zinc-400 dark:text-zinc-600">
+                      #{activeRide._id.slice(-6)}
+                    </span>
+                  </div>
+                  <p className="text-sm font-bold mt-1 line-clamp-1">
+                    {activeRide.pickup} ➔ {activeRide.dropoff}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+                <button
+                  onClick={() => handleCancelActiveRide(activeRide._id)}
+                  disabled={isCancellingActive}
+                  className="px-3.5 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 dark:text-red-600 border border-red-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                >
+                  <RiDeleteBinLine size={14} />
+                  <span>{isCancellingActive ? "Resetting..." : "Cancel Ride"}</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (activeRide.status === "accepted") {
+                      navigate(`/currentride?id=${activeRide._id}`);
+                    } else {
+                      navigate(`/finalride?id=${activeRide._id}`);
+                    }
+                  }}
+                  className="px-4 py-2 bg-white text-zinc-950 dark:bg-zinc-950 dark:text-white rounded-xl text-xs font-bold shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5"
+                >
+                  <span>Resume Ride Navigation</span>
+                  <RiArrowRightUpLine size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Header Row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

@@ -119,7 +119,7 @@ function CurrentLocationMap({ socketRef }) {
   const carIcon = useMemo(() => createCarIcon(isDark), [isDark]);
 
   return (
-    <div className="w-full h-full relative rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
+    <div className={`w-full h-full relative rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 ${isDark ? "map-dark-filter" : ""}`}>
       {error && (
         <div className="absolute top-4 left-4 right-4 z-20 bg-red-500/90 backdrop-blur-md text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg text-center">
           {error}
@@ -145,18 +145,14 @@ function CurrentLocationMap({ socketRef }) {
             style={{ width: "100%", height: "100%", zIndex: 5 }}
           >
             <TileLayer
-              url={
-                isDark
-                  ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                  : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-              }
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-              maxZoom={20}
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              maxZoom={19}
             />
             <Marker position={location} icon={carIcon}>
               <Popup className="custom-popup">
                 <div className="p-1 text-xs">
-                  <p className="font-bold text-zinc-900">Your Vehicle Position</p>
+                  <p className="font-bold text-zinc-950">Your Vehicle Position</p>
                   <p className="text-zinc-500">Live GPS Broadcast Active</p>
                 </div>
               </Popup>
