@@ -1,10 +1,22 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import api from "../api/axiosClint";
-import { Link } from "react-router-dom";
+import api from "../api/axiosClient";
+import { Link, useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
+import { 
+  RiShieldCheckLine, 
+  RiSunLine, 
+  RiMoonLine, 
+  RiArrowRightLine, 
+  RiCarLine,
+  RiCheckDoubleLine
+} from "react-icons/ri";
 
 function Register() {
+  const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,22 +26,20 @@ function Register() {
   const [vehicleName, setVehicleName] = useState("");
   const [vehicleType, setVehicleType] = useState("Sedan");
 
-  // Mutation function for registration
   const SignUpMutation = useMutation({
     mutationFn: async (formData) => {
       return await api.post("/signup-driver", formData);
     },
-    onSuccess: (response) => {
-      console.log("You have registered");
-      toast.success("Registration completed");
+    onSuccess: () => {
+      toast.success("Driver application submitted! Please log in.");
+      navigate("/login");
     },
     onError: (error) => {
       console.error("Error while registering:", error);
-      toast.error("Failed to register");
+      toast.error(error.response?.data?.message || "Failed to submit driver application");
     },
   });
 
-  // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
     if (
@@ -41,7 +51,7 @@ function Register() {
       !vehicle ||
       !licence
     ) {
-      toast.warn("Please fill in all fields.");
+      toast.warn("Please complete all driver and vehicle fields.");
       return;
     }
 
@@ -60,159 +70,247 @@ function Register() {
   };
 
   return (
-    <div className="w-full h-screen grid md:grid-cols-2 overflow-hidden bg-white text-black font-sans">
-      {/* Left Section: Brand (Hidden on mobile, Black bg) */}
-      <div className="hidden md:flex flex-col justify-between bg-black text-white p-12 lg:p-16 relative">
-        <div className="z-10">
-          <h1 className="text-3xl font-bold tracking-tighter">VOYAGO/DRIVER</h1>
+    <div className="w-full min-h-screen grid md:grid-cols-2 bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 font-sans transition-colors duration-300">
+      {/* Left Brand Showcase Section (Desktop) */}
+      <div className="hidden md:flex flex-col justify-between bg-zinc-950 text-white p-10 lg:p-14 relative overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-96 h-96 bg-zinc-800 rounded-full blur-3xl opacity-30 pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-zinc-700 rounded-full blur-3xl opacity-20 pointer-events-none" />
+
+        <div className="z-10 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-black font-extrabold text-xl shadow-lg">
+              V
+            </div>
+            <div>
+              <h1 className="text-xl font-extrabold tracking-tight font-['Space_Grotesk']">
+                VOYAGO
+              </h1>
+              <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
+                Partner Onboarding
+              </span>
+            </div>
+          </div>
+
+          <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-mono text-zinc-300">
+            KYC Sandbox Ready
+          </span>
         </div>
-        <div className="z-10 gap-6 flex flex-col">
-          <h2 className="text-5xl lg:text-7xl font-medium tracking-tight leading-[1.1]">
-            Partner with<br />
-            Voyago.
+
+        <div className="z-10 space-y-6 max-w-lg">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-zinc-900/80 border border-zinc-800 rounded-full text-xs font-semibold text-emerald-400">
+            <RiShieldCheckLine size={15} />
+            <span>Top Tier Earnings • Zero Hidden Commission</span>
+          </div>
+
+          <h2 className="text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] font-['Space_Grotesk']">
+            Partner with the next generation.
           </h2>
-          <p className="text-gray-400 text-lg max-w-md">
-            Join thousands of other drivers who are earning on their own terms.
+
+          <p className="text-sm text-zinc-400 leading-relaxed font-medium">
+            Register your vehicle, verify your commercial license, and start accepting rides with direct 80% automated settlements via Cashfree sandbox.
           </p>
+
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-900">
+            <div className="p-3 bg-zinc-900/60 rounded-2xl border border-zinc-800">
+              <span className="text-lg font-extrabold font-['Space_Grotesk'] text-white">80%</span>
+              <p className="text-[11px] text-zinc-400">Guaranteed Driver Share</p>
+            </div>
+            <div className="p-3 bg-zinc-900/60 rounded-2xl border border-zinc-800">
+              <span className="text-lg font-extrabold font-['Space_Grotesk'] text-emerald-400">Instant</span>
+              <p className="text-[11px] text-zinc-400">Cashfree Settlement</p>
+            </div>
+          </div>
         </div>
-        <div className="z-10 text-sm text-gray-500">
-          &copy; 2025 Uber/Voyago Clone. All rights reserved.
+
+        <div className="z-10 flex items-center justify-between text-xs text-zinc-500 pt-6 border-t border-zinc-900">
+          <span>&copy; {new Date().getFullYear()} Voyago Technologies.</span>
+          <span className="font-mono">Driver Verification Desk</span>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-gray-900 to-transparent opacity-40 pointer-events-none" />
       </div>
 
-      {/* Right Section: Form (White bg) */}
-      <div className="flex flex-col items-center p-6 sm:p-12 md:p-16 w-full overflow-y-auto">
-        {/* Mobile Header for context */}
-        <div className="md:hidden w-full mb-8">
-          <h1 className="text-2xl font-bold tracking-tighter">VOYAGO/DRIVER</h1>
+      {/* Right Registration Form Section */}
+      <div className="flex flex-col justify-between p-6 sm:p-10 md:p-12 lg:p-16 w-full max-w-lg mx-auto md:max-w-none overflow-y-auto">
+        {/* Header & Theme Switcher */}
+        <div className="flex items-center justify-between w-full mb-6">
+          <div className="md:hidden flex items-center gap-2">
+            <div className="w-8 h-8 bg-black dark:bg-white rounded-lg flex items-center justify-center text-white dark:text-black font-extrabold text-sm">
+              V
+            </div>
+            <span className="font-bold text-base font-['Space_Grotesk']">Voyago Driver</span>
+          </div>
+
+          <div className="ml-auto">
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle Theme"
+              className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white transition-all"
+            >
+              {theme === "dark" ? <RiSunLine size={18} /> : <RiMoonLine size={18} />}
+            </button>
+          </div>
         </div>
 
-        <div className="w-full max-w-sm space-y-6">
-          <div className="text-center md:text-left">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900">Become a Driver</h2>
-            <p className="mt-2 text-sm text-gray-500">
-              Sign up today and start earning.
+        {/* Center Form */}
+        <div className="w-full max-w-md mx-auto space-y-5 my-auto">
+          <div>
+            <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white font-['Space_Grotesk']">
+              Become a Driver Partner
+            </h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Submit your vehicle and license details for automated verification.
             </p>
           </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="space-y-3.5" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                Full Legal Name
+              </label>
               <input
                 type="text"
+                required
                 placeholder="John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-all"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  Email
+                </label>
                 <input
                   type="email"
-                  placeholder="name@example.com"
+                  required
+                  placeholder="driver@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-all"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  Password
+                </label>
                 <input
                   type="password"
+                  required
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                Mobile Number
+              </label>
               <input
                 type="tel"
-                placeholder="+1 555 000 0000"
+                required
+                placeholder="+91 98765 43210"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-all"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Name</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  Vehicle Model
+                </label>
                 <input
                   type="text"
-                  placeholder="Toyota Camry"
+                  required
+                  placeholder="Toyota Camry (White)"
                   value={vehicleName}
                   onChange={(e) => setVehicleName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Number</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  Vehicle Number
+                </label>
                 <input
                   type="text"
-                  placeholder="ABC-1234"
+                  required
+                  placeholder="MH 02 AB 1234"
                   value={vehicle}
                   onChange={(e) => setVehicle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono uppercase text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-all"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
-              <select
-                value={vehicleType}
-                onChange={(e) => setVehicleType(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
-              >
-                <option value="Sedan">Sedan (Voyago Go)</option>
-                <option value="SUV">SUV (Voyago Max)</option>
-                <option value="Bike">Bike (Voyago Moto)</option>
-              </select>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  Vehicle Category
+                </label>
+                <select
+                  value={vehicleType}
+                  onChange={(e) => setVehicleType(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-all"
+                >
+                  <option value="Sedan">Sedan (Voyago Go)</option>
+                  <option value="SUV">SUV (Voyago Max)</option>
+                  <option value="Bike">Bike (Voyago Moto)</option>
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Driving License Number</label>
-              <input
-                type="text"
-                placeholder="DL-1234567890"
-                value={licence}
-                onChange={(e) => setLicence(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
-              />
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  License Number
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="DL-1234567890"
+                  value={licence}
+                  onChange={(e) => setLicence(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono uppercase text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-all"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={SignUpMutation.isPending}
-              className={`w-full py-3.5 rounded-lg bg-black text-white font-semibold text-sm transition-all shadow-lg hover:shadow-xl hover:bg-gray-900 active:scale-[0.99] flex items-center justify-center ${SignUpMutation.isPending
-                  ? "opacity-75 cursor-not-allowed"
-                  : ""
-                }`}
+              className="w-full py-3.5 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold text-sm transition-all shadow-lg hover:opacity-90 active:scale-98 flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
             >
-              {SignUpMutation.isPending
-                ? "Creating Account..."
-                : "Create Account"}
+              {SignUpMutation.isPending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white dark:border-zinc-950 border-t-transparent rounded-full animate-spin" />
+                  <span>Submitting Application...</span>
+                </>
+              ) : (
+                <>
+                  <span>Create Driver Account</span>
+                  <RiArrowRightLine size={18} />
+                </>
+              )}
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-500">
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className="text-black font-semibold hover:underline"
-            >
+          <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
+            Already have a driver partner account?{" "}
+            <Link to="/login" className="font-bold text-zinc-950 dark:text-white underline underline-offset-4">
               Sign in here
             </Link>
           </p>
+        </div>
+
+        {/* Bottom Note */}
+        <div className="text-center text-[11px] text-zinc-400 pt-6">
+          By signing up, you agree to Voyago Driver Partner Terms & Safety Guidelines.
         </div>
       </div>
     </div>

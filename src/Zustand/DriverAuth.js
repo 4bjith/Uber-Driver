@@ -8,17 +8,14 @@ const useDriverStore = create(
       driver: null,
       rideId: null,
       socket: null,
-      // ✅ Correct: accepts a new token and saves it
+
       setToken: (newToken) => set({ token: newToken }),
-
       setDriver: (newDriver) => set({ driver: newDriver }),
-
-      setRideId: (newRide) => set({rideId: newRide}),
-
+      setRideId: (newRide) => set({ rideId: newRide }),
       setSocket: (newSocket) => set({ socket: newSocket }),
 
-      // ✅ Clear token on logout
-      logout: () => set({ token: null }),
+      // Clear all driver state on logout
+      logout: () => set({ token: null, driver: null, rideId: null, socket: null }),
     }),
     {
       name: "driver-storage", // localStorage key
@@ -26,4 +23,6 @@ const useDriverStore = create(
     }
   )
 );
+
 export default useDriverStore;
+

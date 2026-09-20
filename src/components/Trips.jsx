@@ -1,68 +1,87 @@
 import { useEffect, useState } from "react";
-import { IoMdArrowDropdown } from "react-icons/io";
-import api from "../api/axiosClint";
+import api from "../api/axiosClient";
 import useDriverStore from "../Zustand/DriverAuth";
-import moment from 'moment'
+import moment from "moment";
+import { 
+  RiMapPinLine, 
+  RiNavigationLine, 
+  RiArrowRightLine, 
+  RiCheckDoubleLine,
+  RiTimeLine,
+  RiCloseLine
+} from "react-icons/ri";
 
-// Sub-component for individual trip item
-const TripItem = ({ start, end, duration, requestedAt, status, earnings, compltedAt }) => {
-  const [currentStatus, setCurrentStatus] = useState(status || "Running");
-
-  const handleStatusChange = (e) => {
-    setCurrentStatus(e.target.value);
-  };
-
-  const getStatusColor = () => {
-    switch (currentStatus) {
-      case "Completed":
-        return "bg-green-300 text-green-800";
-      case "Cancled":
-        return "bg-red-300 text-red-800";
-      case "Running":
-        return "bg-blue-200 text-blue-800";
+const TripItem = ({ start, end, distance, requestedAt, status, earnings, completedAt }) => {
+  const getStatusBadge = () => {
+    switch (status?.toLowerCase()) {
+      case "completed":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
+            <RiCheckDoubleLine size={12} />
+            Completed
+          </span>
+        );
+      case "in_progress":
+      case "accepted":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 animate-pulse">
+            <RiTimeLine size={12} />
+            In Progress
+          </span>
+        );
+      case "cancelled":
+      case "cancled":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+            <RiCloseLine size={12} />
+            Cancelled
+          </span>
+        );
       default:
-        return "bg-gray-200 text-gray-800";
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+            {status}
+          </span>
+        );
     }
   };
 
   return (
-    <div className="w-full h-auto min-h-[3rem] flex flex-wrap items-center justify-between px-2 py-1 border-b border-gray-200">
-      <p className="w-[14%] truncate capitalize text-[0.8rem] sm:text-sm lg:text-base xl:text-lg">
-        {start}
-      </p>
-      <div className="w-[14%] flex items-center justify-center gap-1 text-[0.7rem] sm:text-sm lg:text-base">
-        <p>--</p>
-        <p className="px-2 py-0.5 flex justify-center rounded-full  text-blue-700">
-          {duration ? `${duration} Km` : "N/A"}
-        </p>
-        <p>--</p>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-zinc-50/70 dark:bg-zinc-900/40 border border-zinc-200/70 dark:border-zinc-800/60 hover:bg-zinc-100/80 dark:hover:bg-zinc-900/80 transition-colors gap-3">
+      {/* Route & Points */}
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          <div className="w-2.5 h-2.5 rounded-full border-2 border-zinc-950 dark:border-white bg-white dark:bg-zinc-950" />
+          <div className="w-0.5 h-4 bg-zinc-300 dark:bg-zinc-700" />
+          <div className="w-2.5 h-2.5 rounded-full bg-zinc-950 dark:bg-white" />
+        </div>
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="text-xs font-semibold text-zinc-900 dark:text-white truncate" title={start}>
+            {start}
+          </p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate" title={end}>
+            {end}
+          </p>
+        </div>
       </div>
-      <p className="w-[14%] truncate capitalize text-[0.8rem] sm:text-sm lg:text-base xl:text-lg">
-        {end}
-      </p>
-      <span className="w-[14%] truncate text-gray-400 text-[0.7rem] sm:text-sm lg:text-base">
-        {requestedAt}
-      </span>
 
-      <span className="w-[10%] truncate text-green-500 text-[0.7rem] sm:text-sm lg:text-base">
-       Rs. {earnings.toFixed(2) || ""}
-      </span>
-      <span className="w-[14%] truncate text-gray-400 text-[0.7rem] sm:text-sm lg:text-base">
-        {compltedAt}
-      </span>
-      <div className="w-[10%] text-[0.7rem] sm:text-sm lg:text-base">
-        {
-          status === "completed" && (<p className="text-green-600 font-bold">{status}</p>)
-        }
-        {
-          status === "Canceled" && (<p className="text-red-600">{status}</p>)
-        }
-        {
-          status === "requested" && (<p className="text-yellow-600">{status}</p>)
-        }
-        {
-          status === "in_progress" && (<p className="text-green-600">{status}</p>)
-        }
+      {/* Distance & Timestamp */}
+      <div className="flex sm:flex-col items-start sm:items-end justify-between text-xs text-zinc-500 dark:text-zinc-400 shrink-0">
+        <span className="font-mono font-medium">{distance ? `${distance} km` : "--"}</span>
+        <span className="text-[11px]">
+          {requestedAt ? moment(requestedAt).format("MMM D, h:mm A") : "--"}
+        </span>
+      </div>
+
+      {/* Earnings & Status */}
+      <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-200/60 dark:border-zinc-800/60">
+        <div className="text-right">
+          <p className="text-xs font-bold text-zinc-950 dark:text-white font-['Space_Grotesk']">
+            ₹{earnings ? Number(earnings).toFixed(2) : "0.00"}
+          </p>
+          <p className="text-[10px] text-zinc-400 dark:text-zinc-500">80% Share</p>
+        </div>
+        {getStatusBadge()}
       </div>
     </div>
   );
@@ -70,51 +89,66 @@ const TripItem = ({ start, end, duration, requestedAt, status, earnings, complte
 
 function Trips() {
   const [rides, setRides] = useState([]);
+  const [loading, setLoading] = useState(true);
   const token = useDriverStore((state) => state.token);
-
-  // Helper to decode token and get driver ID (if needed) or just rely on backend filtering
-  // Assuming backend filters by driverId passed in query or body.
-  // Since we don't have driverId in store explicitly (only token), we might need to decode it or fetch profile first.
-  // However, the previous DashBoard code decoded the token to get email.
-  // Let's try to get the driver ID from the token if possible, or use the email if the backend supports it.
-  // The backend `getAllRides` expects `driverId`.
-  // Let's decode the token here to get the ID
 
   useEffect(() => {
     const fetchRides = async () => {
-      if (!token) return
+      if (!token) return;
       try {
-        const response = await api.get('/allrides?limit=6', {
+        setLoading(true);
+        const response = await api.get("/allrides?limit=5", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        const data = response.data?.data
-        setRides(data)
+        const data = response.data?.data;
+        setRides(data || []);
       } catch (error) {
         console.error("Error fetching rides:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchRides();
   }, [token]);
 
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((n) => (
+          <div key={n} className="h-16 rounded-xl bg-zinc-100 dark:bg-zinc-900/60 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
   if (rides.length === 0) {
-    return <div className="p-4 text-center text-gray-500">No recent trips found.</div>;
+    return (
+      <div className="p-8 text-center rounded-2xl bg-zinc-50 dark:bg-zinc-900/40 border border-dashed border-zinc-200 dark:border-zinc-800">
+        <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+          No recent ride activity logged yet.
+        </p>
+        <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+          Incoming trips will appear here with live Cashfree payout calculations.
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full flex flex-col-reverse gap-3">
+    <div className="w-full flex flex-col gap-2.5">
       {rides.map((ride, index) => (
         <TripItem
           key={ride._id || index}
-          start={ride.pickup || "Unknown"}
-          end={ride.dropoff || "Unknown"}
-          duration={ride.distance}
-          requestedAt={moment(ride.requestedAt).format('MMMM Do YYYY, h:mm:ss a')}
-          status={ride.status || "Completed"}
+          start={ride.pickup || "Origin"}
+          end={ride.dropoff || "Destination"}
+          distance={ride.distance}
+          requestedAt={ride.requestedAt}
+          status={ride.status || "completed"}
           earnings={ride.earnings}
-          compltedAt={moment(ride.compltedAt).format('MMMM Do YYYY, h:mm:ss a')}
+          completedAt={ride.compltedAt || ride.completedAt}
         />
       ))}
     </div>
