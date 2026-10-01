@@ -84,6 +84,17 @@ function RouterContent() {
       }
     });
 
+    socketRef.current.on("ride:taken", (data) => {
+      console.log("ℹ️ Ride claimed by another driver:", data);
+      setIsMsg((currentMsg) => {
+        if (currentMsg?.rideId === data.rideId) {
+          toast.info("ℹ️ Ride request was accepted by another driver.");
+          return null;
+        }
+        return currentMsg;
+      });
+    });
+
     socketRef.current.on("ride:paid", (payment) => {
       console.log("💳 Cashfree payment settlement received:", payment);
       toast.success(

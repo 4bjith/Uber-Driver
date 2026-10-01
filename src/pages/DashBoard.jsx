@@ -150,44 +150,36 @@ function DashBoard({ socketRef, Msg, setIsMsg }) {
 
   const handleSubmit = async () => {
     if (!Msg?.rideId) return;
-    localStorage.setItem("rideId", Msg.rideId);
+    const currentRideId = Msg.rideId;
     try {
       await api.post(
         "/driver/acceptride",
-        { rideId: Msg.rideId },
+        { rideId: currentRideId },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      localStorage.setItem("rideId", currentRideId);
       toast.success("Ride accepted! Routing to passenger...");
-      const rideIdToOpen = Msg.rideId;
       setIsMsg(null);
-      navigate(`/currentride?id=${rideIdToOpen}`);
+      navigate(`/currentride?id=${currentRideId}`);
     } catch (err) {
       console.error("Failed to accept ride", err);
-      toast.error(err.response?.data?.message || "Failed to accept ride");
+      setIsMsg(null);
+      localStorage.removeItem("rideId");
+      if (err.response?.status === 409) {
+        toast.info("Ride was already accepted by another driver.");
+      } else {
+        toast.error(err.response?.data?.message || "Failed to accept ride");
+      }
     }
   };
 
-  const handleDecline = async () => {
-    if (!Msg?.rideId) {
-      setIsMsg(null);
-      return;
-    }
-    try {
-      await api.put(
-        "/ride/cancel",
-        { rideId: Msg.rideId },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      toast.info("Ride declined");
-    } catch (err) {
-      console.error("Failed to decline ride", err);
-    } finally {
-      setIsMsg(null);
-    }
+  const handleDecline = () => {
+    // In broadcast model, declining simply dismisses the driver's local alert modal
+    // It leaves the ride available for other nearby drivers in the area
+    setIsMsg(null);
+    toast.info("Ride alert dismissed");
   };
 
   const isOnline = driverProfile?.status === "online" || driver?.status === "online";

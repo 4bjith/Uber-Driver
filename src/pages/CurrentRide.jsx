@@ -253,19 +253,25 @@ export default function CurrentRide({ socketRef }) {
     }
   };
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     const enteredOtp = otpValue.join("");
     if (enteredOtp.length < 4) {
       toast.warn("Please enter complete 4-digit OTP");
       return;
     }
 
-    if (String(rideInfo?.otp) === enteredOtp || enteredOtp === "1234") {
+    try {
+      await api.post(
+        "/ride/verify-otp",
+        { rideId, otp: enteredOtp },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       toast.success("OTP Verified! Starting ride transit...");
       setIsOtpModalOpen(false);
       navigate(`/finalride?id=${rideId}`);
-    } else {
-      toast.error("Invalid Passenger OTP. Please recheck with passenger.");
+    } catch (err) {
+      console.error("Error verifying OTP:", err);
+      toast.error(err.response?.data?.message || "Invalid Passenger OTP. Please recheck with passenger.");
       setOtpValue(["", "", "", ""]);
       otpInputRefs[0].current?.focus();
     }
